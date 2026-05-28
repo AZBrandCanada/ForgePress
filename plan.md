@@ -95,23 +95,28 @@ scripts
 │       │   ├── upload.rs                    # Validates, secures, and saves uploaded media
 │       │   └── optimizer.rs                 # Automatically processes raw images to WebP/AVIF sizes
 │       │
+---------------
 │       ├── cache/                           # Fragment caching & dependency invalidation
 │       │   ├── mod.rs
 │       │   ├── moka_cache.rs                # Thread-safe in-memory cache
 │       │   └── invalidator.rs               # Tracks relationships to clear caches cleanly
 │       │
+-------------------
 │       ├── plugin_engine/                   # Extension loader
 │       │   ├── mod.rs                       # Hook / Filter registry
 │       │   ├── rhai_host.rs                 # Sandboxed Rhai scripts executor
 │       │   └── wasm_host.rs                 # Sandboxed WebAssembly (wasmtime) runner
 │       │
+----------
 │       ├── template_engine/                 # Dynamic HTML Builder
 │       │   ├── mod.rs                       # Combines blocks recursively into layouts
 │       │   └── filters.rs                   # Custom template filters (e.g., date formats)
 │       │
+----------------------
 │       ├── jobs/                            # Background task scheduler (Like "wp-cron")
 │       │   ├── mod.rs
 │       │   └── scheduler.rs                 # Runs scheduled posts publish, sitemap gen, DB cleanup
+-----------------
 │       │
 │       └── i18n/                            # Localization
 │           ├── mod.rs

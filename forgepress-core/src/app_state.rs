@@ -4,25 +4,20 @@ use sqlx::AnyPool;
 use minijinja::Environment;
 
 use crate::config::AppConfig;
-use crate::cache::{CacheInvalidator, PageCache}; // Updated imports
+use crate::cache::{CacheInvalidator, PageCache};
+use crate::plugin_engine::PluginManager;
+use crate::i18n::I18nLoader; // Updated import
 
 /// The global shared state of the ForgePress application.
 #[derive(Clone)]
 pub struct AppState {
-    /// Dynamic SQLite or PostgreSQL database connection pool
     pub db: AnyPool,
-    
-    /// System configurations
     pub config: Arc<AppConfig>,
-    
-    /// Theme template parsing engine
     pub template_env: Arc<Environment<'static>>,
-    
-    /// Custom Moka-based in-memory concurrent cache
     pub cache: PageCache,
-    
-    /// Thread-safe dependency invalidator graph
     pub invalidator: CacheInvalidator,
+    pub plugins: PluginManager,
+    pub i18n: I18nLoader, // Added field
 }
 
 impl AppState {
@@ -31,9 +26,10 @@ impl AppState {
         config: AppConfig,
         template_env: Environment<'static>,
     ) -> Self {
-        // Instantiate our new customized PageCache (capped at 10k items)
         let cache = PageCache::new(10_000);
         let invalidator = CacheInvalidator::new();
+        let plugins = PluginManager::new();
+        let i18n = I18nLoader::new("en"); // Instantiate translations (English as default fallback)
 
         Self {
             db,
@@ -41,6 +37,8 @@ impl AppState {
             template_env: Arc::new(template_env),
             cache,
             invalidator,
+            plugins,
+            i18n,
         }
     }
 }

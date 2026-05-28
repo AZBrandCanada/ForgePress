@@ -1,4 +1,4 @@
-// /forgepress-core/src/main.rs (Updated bootstrap)
+// /forgepress-core/src/main.rs
 use std::net::SocketAddr;
 use sqlx::any::{install_default_drivers, AnyPoolOptions};
 use tokio::net::TcpListener;
@@ -10,15 +10,20 @@ mod config;
 mod error;
 mod auth;
 mod database;
-mod routing; // Added module import
+mod domain;
+mod cache;
+mod plugin_engine;
+mod template_engine;
+mod jobs; // Registered the background jobs module
+mod routing;
 
 use app_state::AppState;
 use config::AppConfig;
-use routing::app_router; // Added Router import
+use routing::app_router;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    // 1. Initialize logging
+    // 1. Initialize structural tracing logs (RUST_LOG configurations)
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
             "info,forgepress_core=debug,tower_http=debug".into()
@@ -28,7 +33,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     info!("Starting ForgePress Core Engine...");
 
-    // 2. Load configurations
+    // 2. Load environment configurations
     let config = AppConfig::load();
 
     // Ensure upload directories exist prior to accepting media posts
@@ -36,7 +41,7 @@ async fn main() -> Result<(), anyhow::Error> {
         warn!("Could not create upload directory path: {}. Ensure permissions are correct.", e);
     }
 
-    // 3. Setup database connection pool
+    // 3. Setup database connection pool dynamically (PostgreSQL or SQLite)
     install_default_drivers();
     
     info!("Connecting to database...");
@@ -65,13 +70,19 @@ async fn main() -> Result<(), anyhow::Error> {
     // 5. Instantiate AppState
     let state = AppState::new(db_pool, config, jinja_env);
 
-    // 6. Build the dynamic global app router
-    let app = app_router(state.clone()); // Load standard nested paths
+    // 6. Automatically scan, validate, and load dynamic dictionaries into RAM
+    info!("Starting language dictionaries discovery...");
+    state.i18n.discover_and_load("content/languages").await?; // <-- Added translation loader scan!
 
-    // 7. Bind port and launch TCP server (Axum v0.7 syntax)
-    let addr = SocketAddr::from(([0, 0, 0, 0], state.config.port));
-    let listener = TcpListener::bind(addr).await?;
-    info!("ForgePress Core listening securely on: http://{}", addr);
+    // 7. Automatically scan, validate, and load plugins into memory
+    info!("Starting plugin discovery...");
+    state.plugins.discover_and_load("content/plugins").await?;
+
+    // 8. Start the background task scheduler daemon
+    jobs::scheduler::start_scheduler(state.clone());
+
+    // 9. Build the dynamic global app router
+    let app = app_router(state.clone()); 
     
     axum::serve(listener, app).await?;
 
