@@ -65,12 +65,14 @@ scripts
 │       │   ├── users.rs                     # User profiles, auth lookups
 │       │   ├── taxonomies.rs                # Maps posts to nested Categories, Tags, and Custom CPTs
 │       │   └── options.rs                   # Key-value site settings (Equivalent to wp_options)
+--------------------------
 │       │
 │       ├── domain/                          # Pure business logic structs (Type-safe schemas)
 │       │   ├── mod.rs
 │       │   ├── page.rs                      # Structures Page data and JSONB parsing types
 │       │   ├── user.rs                      # User definitions
 │       │   └── taxonomy.rs                  # Structural definitions of categories/tags
+------------------------
 │       │
 │       ├── routing/                         # Axum Request/Response Controllers
 │       │   ├── mod.rs                       # Merges admin, public, and webhook routers
@@ -79,11 +81,14 @@ scripts
 │       │   │   ├── auth.rs
 │       │   │   ├── pages.rs                 # Handles PUT of visual editor JSONB payloads
 │       │   │   └── media.rs
-│       │   ├── public/                      # Front-end routing (Handles public traffic)
+--------------------------------------------
+│       │   ├── public/                      # Front-end routing (Handles
+ public traffic)
 │       │   │   ├── mod.rs
 │       │   │   ├── permalinks.rs            # Core dynamic routing rewrite decoder
 │       │   │   └── renderer.rs              # Evaluates the JSONB and stitches templates
 │       │   └── webhooks.rs                  # Public endpoints for third-party triggers
+---------------------------------------
 │       │
 │       ├── media/                           # Asset optimizer (Eliminating manual scaling)
 │       │   ├── mod.rs
