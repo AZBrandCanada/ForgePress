@@ -1,4 +1,4 @@
-// /forgepress-core/src/routing/mod.rs (Updated)
+// /forgepress-core/src/routing/mod.rs
 use axum::Router;
 use crate::app_state::AppState;
 
@@ -6,12 +6,12 @@ pub mod admin_api;
 pub mod public;
 pub mod webhooks;
 
-pub fn app_router(state: AppState) -> Router<AppState> {
+// Changed return type from Router<AppState> to Router<()>
+pub fn app_router(state: AppState) -> Router<()> {
     Router::new()
-        // 1. Nest admin controllers under /api scope
         .nest("/api", admin_api::router(state.clone()))
-        // 2. Nest webhook controllers directly
         .merge(webhooks::router())
-        // 3. Fallback catch-all public rendering controllers (must be evaluated last)
         .merge(public::router())
+        // Resolved the state globally so Axum v0.7 serve is satisfied
+        .with_state(state)
 }

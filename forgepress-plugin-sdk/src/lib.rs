@@ -40,7 +40,9 @@ pub trait ForgePressFilter {
 }
 
 /// Low-level helper to convert WIT bindings to rich SDK structures.
-fn to_rich_blocks(raw_blocks: Vec<BlockData>) -> Vec<RichBlock> {
+/// Marked as pub so the export macro can call it from outer crates.
+#[doc(hidden)]
+pub fn to_rich_blocks(raw_blocks: Vec<BlockData>) -> Vec<RichBlock> {
     raw_blocks
         .into_iter()
         .map(|raw| {
@@ -59,7 +61,9 @@ fn to_rich_blocks(raw_blocks: Vec<BlockData>) -> Vec<RichBlock> {
 }
 
 /// Low-level helper to convert rich structures back into raw WIT bindings.
-fn to_raw_blocks(rich_blocks: Vec<RichBlock>) -> Vec<BlockData> {
+/// Marked as pub so the export macro can call it from outer crates.
+#[doc(hidden)]
+pub fn to_raw_blocks(rich_blocks: Vec<RichBlock>) -> Vec<BlockData> {
     rich_blocks
         .into_iter()
         .map(|rich| {
@@ -76,18 +80,6 @@ fn to_raw_blocks(rich_blocks: Vec<RichBlock>) -> Vec<BlockData> {
 }
 
 /// Central macros to register and export your custom plugin to the WebAssembly runtime.
-/// 
-/// # Example
-/// ```rust
-/// struct MyPlugin;
-/// impl ForgePressFilter for MyPlugin {
-///     fn filter_blocks(&self, mut blocks: Vec<RichBlock>) -> Vec<RichBlock> {
-///         // Custom logic here...
-///         blocks
-///     }
-/// }
-/// forgepress_export!(MyPlugin);
-/// ```
 #[macro_export]
 macro_rules! forgepress_export {
     ($plugin_struct:ty) => {
@@ -115,9 +107,3 @@ macro_rules! forgepress_export {
         $crate::export!(Component);
     };
 }
-
-// Re-export the structural translator utilities required by the macro
-#[doc(hidden)]
-pub use to_raw_blocks;
-#[doc(hidden)]
-pub use to_rich_blocks;

@@ -1,11 +1,10 @@
 // /forgepress-core/src/database/taxonomies.rs
 use sqlx::AnyPool;
-use uuid::Uuid;
 use crate::error::AppError;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
 pub struct Taxonomy {
-    pub id: Uuid,
+    pub id: String, // Changed to String
     pub name: String,
     pub slug: String,
     pub taxonomy_type: String,
@@ -17,12 +16,12 @@ pub async fn create_taxonomy(
     slug: &str,
     taxonomy_type: &str,
 ) -> Result<Taxonomy, AppError> {
-    let id = Uuid::new_v4();
+    let id = uuid::Uuid::new_v4().to_string();
 
     sqlx::query(
         "INSERT INTO taxonomies (id, name, slug, taxonomy_type) VALUES ($1, $2, $3, $4)"
     )
-    .bind(id)
+    .bind(&id)
     .bind(name)
     .bind(slug)
     .bind(taxonomy_type)
@@ -37,7 +36,7 @@ pub async fn create_taxonomy(
     })
 }
 
-pub async fn link_page_to_taxonomy(pool: &AnyPool, page_id: Uuid, taxonomy_id: Uuid) -> Result<(), AppError> {
+pub async fn link_page_to_taxonomy(pool: &AnyPool, page_id: &str, taxonomy_id: &str) -> Result<(), AppError> {
     sqlx::query(
         "INSERT INTO pages_taxonomies (page_id, taxonomy_id) VALUES ($1, $2) \
          ON CONFLICT DO NOTHING"
@@ -49,7 +48,7 @@ pub async fn link_page_to_taxonomy(pool: &AnyPool, page_id: Uuid, taxonomy_id: U
     Ok(())
 }
 
-pub async fn get_taxonomies_for_page(pool: &AnyPool, page_id: Uuid) -> Result<Vec<Taxonomy>, AppError> {
+pub async fn get_taxonomies_for_page(pool: &AnyPool, page_id: &str) -> Result<Vec<Taxonomy>, AppError> {
     let taxonomies = sqlx::query_as::<_, Taxonomy>(
         "SELECT t.* FROM taxonomies t \
          JOIN pages_taxonomies pt ON pt.taxonomy_id = t.id \

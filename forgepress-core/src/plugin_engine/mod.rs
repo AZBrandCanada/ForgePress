@@ -17,12 +17,9 @@ pub struct PluginManifest {
     pub entrypoint: String,
 }
 
-/// Thread-safe in-memory manager holding loaded plugin code.
 #[derive(Clone)]
 pub struct PluginManager {
-    /// Maps plugin name -> Path of Rhai script files
     rhai_plugins: Arc<RwLock<HashMap<String, PathBuf>>>,
-    /// Maps plugin name -> Pre-loaded WebAssembly binary bytes
     wasm_plugins: Arc<RwLock<HashMap<String, Vec<u8>>>>,
 }
 
@@ -34,12 +31,12 @@ impl PluginManager {
         }
     }
 
-    /// Recursively scans content/plugins/ for valid plugin.toml manifests and loads them.
     pub async fn discover_and_load(&self, base_dir: &str) -> Result<(), crate::error::AppError> {
         let plugins_path = Path::new(base_dir);
         if !plugins_path.exists() {
             warn!("Plugins directory '{}' does not exist. Skipping plugin discovery.", base_dir);
-            return Ok();
+            // Fixed: Wrapped the return value in a standard Result tuple
+            return Ok(());
         }
 
         let mut dir_entries = tokio::fs::read_dir(plugins_path).await?;
@@ -58,9 +55,7 @@ impl PluginManager {
         Ok(())
     }
 
-    /// Loads, validates, and caches a single plugin structure in memory.
     async fn load_single_plugin(&self, plugin_dir: &Path, manifest_path: &Path) -> Result<(), crate::error::AppError> {
-        // 1. Read and parse the manifest configuration
         let manifest_content = tokio::fs::read_to_string(manifest_path).await?;
         let manifest: PluginManifest = toml::from_str(&manifest_content)
             .map_err(|e| crate::error::AppError::Plugin(format!("Failed to parse plugin.toml: {}", e)))?;
@@ -73,7 +68,6 @@ impl PluginManager {
             )));
         }
 
-        // 2. Route compilation based on file extensions
         if manifest.entrypoint.ends_with(".rhai") {
             let mut rhai_map = self.rhai_plugins.write().await;
             rhai_map.insert(manifest.name.clone(), entrypoint_path);
@@ -93,7 +87,6 @@ impl PluginManager {
         Ok(())
     }
 
-    /// Iterates through all loaded Rhai filters matching the hook name, altering the JSON block on-the-fly.
     pub async fn run_rhai_filters(&self, hook_name: &str, mut data: serde_json::Value) -> serde_json::Value {
         let rhai_map = self.rhai_plugins.read().await;
         for (plugin_name, script_path) in rhai_map.iter() {

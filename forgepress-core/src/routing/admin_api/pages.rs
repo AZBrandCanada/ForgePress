@@ -5,11 +5,10 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
-use uuid::Uuid;
 
 use crate::app_state::AppState;
 use crate::auth::{require_role_permission, Claims, Permission};
-use crate::database::pages::{create_page, delete_page, get_page_by_slug, update_page};
+use crate::database::pages as db_pages;
 use crate::error::AppError;
 
 #[derive(Deserialize)]
@@ -32,18 +31,16 @@ pub async fn create_page(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePageRequest>,
 ) -> Result<Json<Value>, AppError> {
-    // Require standard write capabilities
     require_role_permission(&claims, Permission::CreatePosts)?;
 
-    // Validate if the slug is already registered
-    if let Some(_) = get_page_by_slug(&state.db, &payload.slug).await? {
+    if let Some(_) = db_pages::get_page_by_slug(&state.db, &payload.slug).await? {
         return Err(AppError::Internal(format!(
             "A page with the slug '{}' already exists.",
             payload.slug
         )));
     }
 
-    let page = create_page(&state.db, &payload.title, &payload.slug, Some(claims.sub)).await?;
+    let page = db_pages::create_page(&state.db, &payload.title, &payload.slug, Some(claims.sub.to_string())).await?;
 
     Ok(Json(json!({
         "status": "success",
@@ -55,7 +52,7 @@ pub async fn get_page(
     State(state): State<AppState>,
     Path(slug): Path<String>,
 ) -> Result<Json<Value>, AppError> {
-    let page = get_page_by_slug(&state.db, &slug)
+    let page = db_pages::get_page_by_slug(&state.db, &slug)
         .await?
         .ok_or_else(|| AppError::NotFound(format!("Page '{}' not found.", slug)))?;
 
@@ -65,10 +62,9 @@ pub async fn get_page(
 pub async fn save_page(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<String>, // Changed Path<Uuid> to Path<String>
     Json(payload): Json<UpdatePageRequest>,
 ) -> Result<Json<Value>, AppError> {
-    // Require publish or update capabilities depending on target status
     let required_perm = if payload.status == "published" {
         Permission::PublishPosts
     } else {
@@ -76,9 +72,9 @@ pub async fn save_page(
     };
     require_role_permission(&claims, required_perm)?;
 
-    update_page(
+    db_pages::update_page(
         &state.db,
-        id,
+        &id,
         &payload.title,
         &payload.slug,
         &payload.status,
@@ -87,8 +83,7 @@ pub async fn save_page(
     )
     .await?;
 
-    // Invalidate local in-memory caches matching this updated route path
-    state.cache.remove(&payload.slug).await;
+    state.cache.invalidate(&payload.slug).await;
 
     Ok(Json(json!({
         "status": "success",
@@ -99,11 +94,11 @@ pub async fn save_page(
 pub async fn remove_page(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<String>, // Changed Path<Uuid> to Path<String>
 ) -> Result<Json<Value>, AppError> {
     require_role_permission(&claims, Permission::PublishPosts)?;
 
-    delete_page(&state.db, id).await?;
+    db_pages::delete_page(&state.db, &id).await?;
 
     Ok(Json(json!({
         "status": "success",

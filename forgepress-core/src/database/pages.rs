@@ -1,6 +1,5 @@
 // /forgepress-core/src/database/pages.rs
 use sqlx::AnyPool;
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use sqlx::types::Json;
@@ -8,12 +7,11 @@ use crate::error::AppError;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
 pub struct Page {
-    pub id: Uuid,
+    pub id: String, // Changed to String
     pub title: String,
     pub slug: String,
     pub status: String,
-    pub author_id: Option<Uuid>,
-    /// sqlx::types::Json wraps parsing rules to support Postgres JSONB & SQLite Text dynamic mapping.
+    pub author_id: Option<String>, // Changed to Option<String>
     pub content: Json<Value>,
     pub meta: Json<Value>,
     pub published_at: Option<DateTime<Utc>>,
@@ -25,9 +23,9 @@ pub async fn create_page(
     pool: &AnyPool,
     title: &str,
     slug: &str,
-    author_id: Option<Uuid>,
+    author_id: Option<String>, // Changed to Option<String>
 ) -> Result<Page, AppError> {
-    let id = Uuid::new_v4();
+    let id = uuid::Uuid::new_v4().to_string();
     let now = Utc::now();
     let default_content = Json(serde_json::json!([]));
     let default_meta = Json(serde_json::json!({}));
@@ -36,10 +34,10 @@ pub async fn create_page(
         "INSERT INTO pages (id, title, slug, status, author_id, content, meta, created_at, updated_at) \
          VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7, $8)"
     )
-    .bind(id)
+    .bind(&id)
     .bind(title)
     .bind(slug)
-    .bind(author_id)
+    .bind(&author_id)
     .bind(&default_content)
     .bind(&default_meta)
     .bind(now)
@@ -71,7 +69,7 @@ pub async fn get_page_by_slug(pool: &AnyPool, slug: &str) -> Result<Option<Page>
 
 pub async fn update_page(
     pool: &AnyPool,
-    id: Uuid,
+    id: &str, // Changed to String slice
     title: &str,
     slug: &str,
     status: &str,
@@ -99,7 +97,7 @@ pub async fn update_page(
     Ok(())
 }
 
-pub async fn delete_page(pool: &AnyPool, id: Uuid) -> Result<(), AppError> {
+pub async fn delete_page(pool: &AnyPool, id: &str) -> Result<(), AppError> {
     sqlx::query("DELETE FROM pages WHERE id = $1")
         .bind(id)
         .execute(pool)

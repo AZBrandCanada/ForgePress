@@ -1,12 +1,11 @@
 // /forgepress-core/src/database/users.rs
-use sqlx::{AnyPool, Row};
-use uuid::Uuid;
+use sqlx::AnyPool;
 use chrono::Utc;
 use crate::error::AppError;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
 pub struct User {
-    pub id: Uuid,
+    pub id: String, // Changed from Uuid to String
     pub username: String,
     pub email: String,
     pub password_hash: String,
@@ -22,14 +21,14 @@ pub async fn create_user(
     password_hash: &str,
     role: &str,
 ) -> Result<User, AppError> {
-    let id = Uuid::new_v4();
+    let id = uuid::Uuid::new_v4().to_string(); // Save UUID as string
     let now = Utc::now();
 
     sqlx::query(
         "INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at) \
          VALUES ($1, $2, $3, $4, $5, $6, $7)"
     )
-    .bind(id)
+    .bind(&id)
     .bind(username)
     .bind(email)
     .bind(password_hash)
@@ -50,7 +49,7 @@ pub async fn create_user(
     })
 }
 
-pub async fn get_user_by_id(pool: &AnyPool, id: Uuid) -> Result<Option<User>, AppError> {
+pub async fn get_user_by_id(pool: &AnyPool, id: &str) -> Result<Option<User>, AppError> {
     let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
         .bind(id)
         .fetch_optional(pool)

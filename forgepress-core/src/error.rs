@@ -4,27 +4,18 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde_json::json;
 use tracing::error;
+use std::fmt;
 
-/// Centralized error handling enum for all ForgePress operations.
 #[derive(Debug)]
 pub enum AppError {
-    /// Wrapped SQLx database errors (Postgres / SQLite).
     Database(sqlx::Error),
-    /// Wrapped template compilation or rendering failures.
     Template(minijinja::Error),
-    /// Authentication, authorization, or token-related failures.
     Auth(String),
-    /// File uploading or file system errors.
     Io(std::io::Error),
-    /// Requested resource is missing.
     NotFound(String),
-    /// Internal script (Rhai) or WebAssembly execution errors.
     Plugin(String),
-    /// Generic unhandled exception.
     Internal(String),
 }
-
-// Implement standard From traits to support ergonomic "?" operator propagation in handlers.
 
 impl From<sqlx::Error> for AppError {
     fn from(err: sqlx::Error) -> Self {
@@ -44,13 +35,29 @@ impl From<std::io::Error> for AppError {
     }
 }
 
+// 1. Implement Display for type conversions
+impl fmt::Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AppError::Database(e) => write!(f, "Database error: {}", e),
+            AppError::Template(e) => write!(f, "Template error: {}", e),
+            AppError::Auth(s) => write!(f, "Auth error: {}", s),
+            AppError::Io(e) => write!(f, "I/O error: {}", e),
+            AppError::NotFound(s) => write!(f, "Not found: {}", s),
+            AppError::Plugin(s) => write!(f, "Plugin error: {}", s),
+            AppError::Internal(s) => write!(f, "Internal error: {}", s),
+        }
+    }
+}
+
+// 2. Implement standard Error trait
+impl std::error::Error for AppError {}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
             AppError::Database(ref err) => {
-                // SECURITY: Log the detailed database query error inside the server...
                 error!("Database Exception: {:?}", err);
-                // ...but return a sanitized, non-disclosing message to the API client.
                 (StatusCode::INTERNAL_SERVER_ERROR, "A database processing error occurred.".to_string())
             }
             AppError::Template(ref err) => {
@@ -78,7 +85,6 @@ impl IntoResponse for AppError {
             }
         };
 
-        // Construct standard, clean JSON payloads for API error responses
         let body = Json(json!({
             "status": "error",
             "message": error_message

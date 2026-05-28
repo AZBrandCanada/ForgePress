@@ -26,7 +26,7 @@
   });
 
   // 1. Secure Authentication Login handler
-  async fn handleLogin() {
+  async function handleLogin() {
     authError = '';
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
@@ -48,7 +48,7 @@
     }
   }
 
-  fn handleLogout() {
+  function handleLogout() {
     token = '';
     localStorage.removeItem('fp_token');
     pages = [];
@@ -57,7 +57,7 @@
   }
 
   // 2. Fetch all registered page models
-  async fn loadPages() {
+  async function loadPages() {
     try {
       const res = await fetch(`${API_BASE}/admin/pages`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -74,7 +74,7 @@
   }
 
   // 3. Open selected page in the block editor
-  async fn openEditor(page) {
+  async function openEditor(page) {
     try {
       const res = await fetch(`${API_BASE}/admin/pages/${page.slug}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -91,7 +91,7 @@
   }
 
   // 4. Page Builder Functions
-  fn addHeroBlock() {
+  function addHeroBlock() {
     editorBlocks = [...editorBlocks, {
       type: "hero_section",
       settings: { background: "#6366f1", padding: "80px" },
@@ -101,7 +101,8 @@
     }];
   }
 
-  fn addRichTextBlock() {
+  // 5. Rich Text Block
+  function addRichTextBlock() {
     editorBlocks = [...editorBlocks, {
       type: "rich_text",
       settings: { padding: "20px" },
@@ -109,12 +110,12 @@
     }];
   }
 
-  fn removeBlock(index) {
+  function removeBlock(index) {
     editorBlocks = editorBlocks.filter((_, i) => i !== index);
   }
 
-  // 5. Atomic PUT Save Request to SQLx database
-  async fn savePageLayout() {
+  // 6. Atomic PUT Save Request to SQLx database
+  async function savePageLayout() {
     saveStatus = 'Saving...';
     try {
       const res = await fetch(`${API_BASE}/admin/pages/${selectedPage.id}`, {
