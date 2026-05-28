@@ -45,6 +45,10 @@ pub async fn create_page(
     let content_value: Value = serde_json::from_str(&page.content).unwrap_or_else(|_| json!([]));
     let meta_value: Value = serde_json::from_str(&page.meta).unwrap_or_else(|_| json!({}));
 
+    // Fixed: Maps empty strings ("") back to serializable None/null fields for the client
+    let author_id_opt = if page.author_id.is_empty() { None } else { Some(&page.author_id) };
+    let published_at_opt = if page.published_at.is_empty() { None } else { Some(&page.published_at) };
+
     Ok(Json(json!({
         "status": "success",
         "data": {
@@ -52,10 +56,10 @@ pub async fn create_page(
             "title": page.title,
             "slug": page.slug,
             "status": page.status,
-            "author_id": page.author_id,
+            "author_id": author_id_opt,
             "content": content_value,
             "meta": meta_value,
-            "published_at": page.published_at,
+            "published_at": published_at_opt,
             "created_at": page.created_at,
             "updated_at": page.updated_at
         }
@@ -73,6 +77,10 @@ pub async fn get_page(
     let content_value: Value = serde_json::from_str(&page.content).unwrap_or_else(|_| json!([]));
     let meta_value: Value = serde_json::from_str(&page.meta).unwrap_or_else(|_| json!({}));
 
+    // Fixed: Maps empty strings ("") back to serializable None/null fields for the client
+    let author_id_opt = if page.author_id.is_empty() { None } else { Some(&page.author_id) };
+    let published_at_opt = if page.published_at.is_empty() { None } else { Some(&page.published_at) };
+
     Ok(Json(json!({ 
         "status": "success", 
         "data": {
@@ -80,10 +88,10 @@ pub async fn get_page(
             "title": page.title,
             "slug": page.slug,
             "status": page.status,
-            "author_id": page.author_id,
+            "author_id": author_id_opt,
             "content": content_value,
             "meta": meta_value,
-            "published_at": page.published_at,
+            "published_at": published_at_opt,
             "created_at": page.created_at,
             "updated_at": page.updated_at
         }

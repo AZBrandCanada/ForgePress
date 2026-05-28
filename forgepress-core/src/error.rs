@@ -35,7 +35,6 @@ impl From<std::io::Error> for AppError {
     }
 }
 
-// 1. Implement Display for type conversions
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -50,38 +49,45 @@ impl fmt::Display for AppError {
     }
 }
 
-// 2. Implement standard Error trait
 impl std::error::Error for AppError {}
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let (status, error_message) = match self {
-            AppError::Database(ref err) => {
-                error!("Database Exception: {:?}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "A database processing error occurred.".to_string())
+        let status = match self {
+            AppError::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::Template(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::Auth(_) => StatusCode::UNAUTHORIZED,
+            AppError::Io(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::NotFound(_) => StatusCode::NOT_FOUND,
+            AppError::Plugin(_) => StatusCode::BAD_GATEWAY,
+            AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+
+        // 1. Log the full detailed systems error inside the server console/terminal
+        error!("AppError Exception: {:?}", self);
+
+        // 2. Determine error message to return to client
+        // If we are in local development (debug), return the raw, detailed system error!
+        // If in production (release), return a sanitized string to protect server internals.
+        let error_message = if cfg!(debug_assertions) {
+            match self {
+                AppError::Database(err) => format!("Database Exception: {}", err),
+                AppError::Template(err) => format!("Template Exception: {}", err),
+                AppError::Auth(msg) => msg,
+                AppError::Io(err) => format!("I/O Exception: {}", err),
+                AppError::NotFound(msg) => msg,
+                AppError::Plugin(msg) => format!("Plugin Exception: {}", msg),
+                AppError::Internal(msg) => format!("Internal Exception: {}", msg),
             }
-            AppError::Template(ref err) => {
-                error!("Template Exception: {:?}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "A rendering template error occurred.".to_string())
-            }
-            AppError::Auth(msg) => {
-                error!("Auth Exception: {}", msg);
-                (StatusCode::UNAUTHORIZED, msg)
-            }
-            AppError::Io(ref err) => {
-                error!("I/O Exception: {:?}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "A file system operations error occurred.".to_string())
-            }
-            AppError::NotFound(msg) => {
-                (StatusCode::NOT_FOUND, msg)
-            }
-            AppError::Plugin(msg) => {
-                error!("Plugin Sandbox Exception: {}", msg);
-                (StatusCode::BAD_GATEWAY, "An error occurred inside an active plugin extension.".to_string())
-            }
-            AppError::Internal(msg) => {
-                error!("Internal Server Exception: {}", msg);
-                (StatusCode::INTERNAL_SERVER_ERROR, "An internal server error occurred.".to_string())
+        } else {
+            match self {
+                AppError::Database(_) => "A database processing error occurred.".to_string(),
+                AppError::Template(_) => "A rendering template error occurred.".to_string(),
+                AppError::Auth(msg) => msg,
+                AppError::Io(_) => "A file system operations error occurred.".to_string(),
+                AppError::NotFound(msg) => msg,
+                AppError::Plugin(_) => "An error occurred inside an active plugin extension.".to_string(),
+                AppError::Internal(_) => "An internal server error occurred.".to_string(),
             }
         };
 

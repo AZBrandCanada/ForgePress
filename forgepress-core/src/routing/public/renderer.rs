@@ -62,11 +62,9 @@ pub fn compile_blocks<'a>(
 pub async fn render_page(state: &AppState, page: &Page) -> Result<String, AppError> {
     debug!("Starting page rendering pipeline for page: '{}'", page.title);
 
-    // 1. Deserialize the plain database String directly into type-safe Block structs
     let blocks: Vec<Block> = serde_json::from_str(&page.content)
         .map_err(|e| AppError::Internal(format!("Failed to deserialize page content layout: {}", e)))?;
 
-    // 2. Compile the inner block layouts recursively
     let body_content = compile_blocks(state, &blocks).await?;
 
     let single_template = state.template_env.get_template("single.html")
@@ -75,7 +73,6 @@ pub async fn render_page(state: &AppState, page: &Page) -> Result<String, AppErr
             AppError::Template(e)
         })?;
 
-    // Deserialize metadata schema
     let meta_value: Value = serde_json::from_str(&page.meta).unwrap_or_else(|_| serde_json::json!({}));
 
     let full_html = single_template.render(context! {
@@ -83,8 +80,8 @@ pub async fn render_page(state: &AppState, page: &Page) -> Result<String, AppErr
         slug => page.slug,
         meta => meta_value,
         body => body_content,
-        // Fixed: Cloned standard String directly, completely bypassing to_rfc3339() call
-        published_at => page.published_at.clone().unwrap_or_default()
+        // Fixed: Read the non-nullable string directly. If empty, falls back to empty default string.
+        published_at => if page.published_at.is_empty() { "".to_string() } else { page.published_at.clone() }
     })
     .map_err(|e| AppError::Template(e))?;
 

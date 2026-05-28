@@ -10,10 +10,10 @@ pub struct Page {
     pub title: String,
     pub slug: String,
     pub status: String,
-    pub author_id: Option<String>,
-    pub content: String, // Changed from Json<Value> to String
-    pub meta: String,    // Changed from Json<Value> to String
-    pub published_at: Option<String>,
+    pub author_id: String,     // Changed from Option<String> to String
+    pub content: String,
+    pub meta: String,
+    pub published_at: String,  // Changed from Option<String> to String
     pub created_at: String,
     pub updated_at: String,
 }
@@ -27,17 +27,17 @@ pub async fn create_page(
     let id = uuid::Uuid::new_v4().to_string();
     let now = Utc::now().to_rfc3339();
     
-    // Default structure templates serialized as standard Strings
     let default_content = "[]".to_string();
     let default_meta = "{}".to_string();
 
     sqlx::query(
         "INSERT INTO pages (id, title, slug, status, author_id, content, meta, created_at, updated_at) \
-         VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7, $8)"
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
     )
     .bind(&id)
     .bind(title)
     .bind(slug)
+    .bind("draft") 
     .bind(&author_id)
     .bind(&default_content)
     .bind(&default_meta)
@@ -51,20 +51,25 @@ pub async fn create_page(
         title: title.to_string(),
         slug: slug.to_string(),
         status: "draft".to_string(),
-        author_id,
+        author_id: author_id.unwrap_or_default(), // Convert Option to String
         content: default_content,
         meta: default_meta,
-        published_at: None,
+        published_at: "".to_string(), // Empty string fallback
         created_at: now.clone(),
         updated_at: now,
     })
 }
 
 pub async fn get_page_by_slug(pool: &AnyPool, slug: &str) -> Result<Option<Page>, AppError> {
-    let page = sqlx::query_as::<_, Page>("SELECT * FROM pages WHERE slug = $1")
-        .bind(slug)
-        .fetch_optional(pool)
-        .await?;
+    // Fixed: Wrapped nullable fields in COALESCE to force the Any driver to parse them as String
+    let page = sqlx::query_as::<_, Page>(
+        "SELECT id, title, slug, status, COALESCE(author_id, '') AS author_id, content, meta, \
+         COALESCE(published_at, '') AS published_at, created_at, updated_at \
+         FROM pages WHERE slug = $1"
+    )
+    .bind(slug)
+    .fetch_optional(pool)
+    .await?;
     Ok(page)
 }
 
@@ -80,7 +85,6 @@ pub async fn update_page(
     let now = Utc::now().to_rfc3339();
     let published_at = if status == "published" { Some(now.clone()) } else { None };
 
-    // Serialize JSON payloads to safe database-portable Strings on the fly
     let content_str = serde_json::to_string(&content)
         .map_err(|e| AppError::Internal(format!("Failed to serialize page content: {}", e)))?;
     let meta_str = serde_json::to_string(&meta)
