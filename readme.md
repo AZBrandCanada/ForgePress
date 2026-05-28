@@ -665,5 +665,3 @@ If you make manual modifications to your theme files, templates, or database con
 # Invalidate the entire site cache
 ./target/release/forgepress-cli clear-cache --target all
 ```
-
-This updated `README.md` serves as a complete technical reference manual for your project, detailing every sub-component, exact API structure, and systems-level trade-off.
