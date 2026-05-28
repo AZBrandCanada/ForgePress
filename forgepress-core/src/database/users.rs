@@ -5,13 +5,13 @@ use crate::error::AppError;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
 pub struct User {
-    pub id: String, // Changed from Uuid to String
+    pub id: String,
     pub username: String,
     pub email: String,
     pub password_hash: String,
     pub role: String,
-    pub created_at: chrono::DateTime<Utc>,
-    pub updated_at: chrono::DateTime<Utc>,
+    pub created_at: String,
+    pub updated_at: String,
 }
 
 pub async fn create_user(
@@ -21,8 +21,8 @@ pub async fn create_user(
     password_hash: &str,
     role: &str,
 ) -> Result<User, AppError> {
-    let id = uuid::Uuid::new_v4().to_string(); // Save UUID as string
-    let now = Utc::now();
+    let id = uuid::Uuid::new_v4().to_string();
+    let now = Utc::now().to_rfc3339();
 
     sqlx::query(
         "INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at) \
@@ -33,8 +33,8 @@ pub async fn create_user(
     .bind(email)
     .bind(password_hash)
     .bind(role)
-    .bind(now)
-    .bind(now)
+    .bind(&now)
+    .bind(&now)
     .execute(pool)
     .await?;
 
@@ -44,7 +44,8 @@ pub async fn create_user(
         email: email.to_string(),
         password_hash: password_hash.to_string(),
         role: role.to_string(),
-        created_at: now,
+        // Fixed: Cloned standard RFC3339 string before second use
+        created_at: now.clone(),
         updated_at: now,
     })
 }

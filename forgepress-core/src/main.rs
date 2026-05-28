@@ -12,9 +12,11 @@ mod auth;
 mod database;
 mod domain;
 mod cache;
+mod media; // Declared media module
 mod plugin_engine;
 mod template_engine;
-mod jobs; // Registered the background jobs module
+mod jobs;
+mod i18n; // Declared internationalization module
 mod routing;
 
 use app_state::AppState;
@@ -63,26 +65,31 @@ async fn main() -> Result<(), anyhow::Error> {
         .run(&db_pool)
         .await?;
 
-    // 4. Initialize MiniJinja Template Environment
-    let mut jinja_env = minijinja::Environment::new();
-    jinja_env.set_loader(minijinja::path_loader("content/themes/default/templates"));
+    // 4. Initialize MiniJinja Template Environment via template_engine module
+    info!("Initializing MiniJinja environment...");
+    let jinja_env = template_engine::create_environment()?;
     
-    // 5. Instantiate AppState
+    // 5. Instantiate global AppState
     let state = AppState::new(db_pool, config, jinja_env);
 
     // 6. Automatically scan, validate, and load dynamic dictionaries into RAM
     info!("Starting language dictionaries discovery...");
-    state.i18n.discover_and_load("content/languages").await?; // <-- Added translation loader scan!
+    state.i18n.discover_and_load("content/languages").await?;
 
     // 7. Automatically scan, validate, and load plugins into memory
     info!("Starting plugin discovery...");
     state.plugins.discover_and_load("content/plugins").await?;
 
-    // 8. Start the background task scheduler daemon
+    // 8. Start the background task scheduler daemon (Tokio thread-spawned loop)
     jobs::scheduler::start_scheduler(state.clone());
 
-    // 9. Build the dynamic global app router
+    // 9. Build the dynamic global app router (loads /api, webhooks, and public folders)
     let app = app_router(state.clone()); 
+
+    // 10. Bind port and launch TCP server (Axum v0.7 syntax)
+    let addr = SocketAddr::from(([0, 0, 0, 0], state.config.port));
+    let listener = TcpListener::bind(addr).await?;
+    info!("ForgePress Core listening securely on: http://{}", addr);
     
     axum::serve(listener, app).await?;
 

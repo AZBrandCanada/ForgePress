@@ -10,10 +10,6 @@ use crate::database::pages::Page;
 use crate::domain::page::Block;
 use crate::error::AppError;
 
-/// Compiles a vector of layout blocks recursively into an HTML string.
-/// 
-/// Note: To support async execution (running dynamic plugin filters), we return a Pinned Boxed Future.
-/// This prevents compile-time stack allocation sizing errors common to recursive async functions in Rust.
 pub fn compile_blocks<'a>(
     state: &'a AppState,
     blocks: &'a [Block],
@@ -22,30 +18,24 @@ pub fn compile_blocks<'a>(
         let mut compiled_html = String::new();
 
         for mut block in blocks.iter().cloned() {
-            // Run input sanitization to filter malicious inline script injections
             block.sanitize_html_blocks();
 
-            // 1. If this block has nested child blocks, compile them recursively first
             let nested_html = if let Some(ref children) = block.blocks {
                 compile_blocks(state, children).await?
             } else {
                 String::new()
             };
 
-            // 2. Intercept and run dynamic plugin filters on block data and settings prior to template parsing
             let mut settings = block.settings.unwrap_or(Value::Null);
             let mut data = block.data.unwrap_or(Value::Null);
 
-            // Trigger hooks for plugins to modify settings or data values dynamically
             settings = state.plugins.run_rhai_filters(&format!("filter_{}_settings", block.block_type), settings).await;
             data = state.plugins.run_rhai_filters(&format!("filter_{}_data", block.block_type), data).await;
 
-            // 3. Locate the MiniJinja template corresponding to this block type (e.g., blocks/hero_section.html)
             let template_name = format!("blocks/{}.html", block.block_type);
             
             let block_html = match state.template_env.get_template(&template_name) {
                 Ok(template) => {
-                    // Pass the block's settings, data, and recursively compiled nested children into the context
                     template.render(context! {
                         settings => settings,
                         data => data,
@@ -54,8 +44,6 @@ pub fn compile_blocks<'a>(
                     .map_err(|e| AppError::Template(e))?
                 }
                 Err(err) => {
-                    // EDGE CASE FALLBACK: If the theme is missing a template for a custom plugin block,
-                    // log a warning and render a safe fallback container instead of returning a 500 Server Error.
                     warn!("Missing block template '{}'. Error: {:?}", template_name, err);
                     format!(
                         "<div class=\"forge-block-fallback\" data-block-type=\"{}\">{}</div>",
@@ -71,33 +59,32 @@ pub fn compile_blocks<'a>(
     })
 }
 
-/// Entry point to render a full page using the master layout files.
-/// 
-/// Accepts the global shared AppState to interface with configuration paths,
-/// database pools, and template environments smoothly.
 pub async fn render_page(state: &AppState, page: &Page) -> Result<String, AppError> {
     debug!("Starting page rendering pipeline for page: '{}'", page.title);
 
-    // 1. Deserialize the dynamic JSONB page structure into type-safe Block structs
-    let blocks: Vec<Block> = serde_json::from_value(page.content.0.clone())
+    // 1. Deserialize the plain database String directly into type-safe Block structs
+    let blocks: Vec<Block> = serde_json::from_str(&page.content)
         .map_err(|e| AppError::Internal(format!("Failed to deserialize page content layout: {}", e)))?;
 
-    // 2. Compile the inner block layouts recursively and asynchronously
+    // 2. Compile the inner block layouts recursively
     let body_content = compile_blocks(state, &blocks).await?;
 
-    // 3. Render the main page shell (single.html), injecting metadata and compiled body
     let single_template = state.template_env.get_template("single.html")
         .map_err(|e| {
             error!("Active theme is missing 'single.html' master template.");
             AppError::Template(e)
         })?;
 
+    // Deserialize metadata schema
+    let meta_value: Value = serde_json::from_str(&page.meta).unwrap_or_else(|_| serde_json::json!({}));
+
     let full_html = single_template.render(context! {
         title => page.title,
         slug => page.slug,
-        meta => page.meta.0,
+        meta => meta_value,
         body => body_content,
-        published_at => page.published_at.map(|dt| dt.to_rfc3339()).unwrap_or_default()
+        // Fixed: Cloned standard String directly, completely bypassing to_rfc3339() call
+        published_at => page.published_at.clone().unwrap_or_default()
     })
     .map_err(|e| AppError::Template(e))?;
 

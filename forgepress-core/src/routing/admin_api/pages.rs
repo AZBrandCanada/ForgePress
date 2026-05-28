@@ -42,9 +42,23 @@ pub async fn create_page(
 
     let page = db_pages::create_page(&state.db, &payload.title, &payload.slug, Some(claims.sub.to_string())).await?;
 
+    let content_value: Value = serde_json::from_str(&page.content).unwrap_or_else(|_| json!([]));
+    let meta_value: Value = serde_json::from_str(&page.meta).unwrap_or_else(|_| json!({}));
+
     Ok(Json(json!({
         "status": "success",
-        "data": page
+        "data": {
+            "id": page.id,
+            "title": page.title,
+            "slug": page.slug,
+            "status": page.status,
+            "author_id": page.author_id,
+            "content": content_value,
+            "meta": meta_value,
+            "published_at": page.published_at,
+            "created_at": page.created_at,
+            "updated_at": page.updated_at
+        }
     })))
 }
 
@@ -56,13 +70,30 @@ pub async fn get_page(
         .await?
         .ok_or_else(|| AppError::NotFound(format!("Page '{}' not found.", slug)))?;
 
-    Ok(Json(json!({ "status": "success", "data": page })))
+    let content_value: Value = serde_json::from_str(&page.content).unwrap_or_else(|_| json!([]));
+    let meta_value: Value = serde_json::from_str(&page.meta).unwrap_or_else(|_| json!({}));
+
+    Ok(Json(json!({ 
+        "status": "success", 
+        "data": {
+            "id": page.id,
+            "title": page.title,
+            "slug": page.slug,
+            "status": page.status,
+            "author_id": page.author_id,
+            "content": content_value,
+            "meta": meta_value,
+            "published_at": page.published_at,
+            "created_at": page.created_at,
+            "updated_at": page.updated_at
+        }
+    })))
 }
 
 pub async fn save_page(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<String>, // Changed Path<Uuid> to Path<String>
+    Path(id): Path<String>,
     Json(payload): Json<UpdatePageRequest>,
 ) -> Result<Json<Value>, AppError> {
     let required_perm = if payload.status == "published" {
@@ -94,7 +125,7 @@ pub async fn save_page(
 pub async fn remove_page(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<String>, // Changed Path<Uuid> to Path<String>
+    Path(id): Path<String>,
 ) -> Result<Json<Value>, AppError> {
     require_role_permission(&claims, Permission::PublishPosts)?;
 

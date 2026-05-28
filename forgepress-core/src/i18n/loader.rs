@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info, warn, error};
-use serde_json::Value;
+use tracing::{info, warn};
 
 use axum::{
     extract::FromRequestParts,
@@ -22,7 +21,8 @@ where
 {
     type Rejection = AppError;
 
-    async fn from_request_parts(parts: &Parts, _state: &S) -> Result<Self, Self::Rejection> {
+    // Fixed: Changed parts parameter to a mutable reference (&mut Parts) to match Axum v0.7
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         // 1. Inspect URL Query String for manually defined overrides (e.g., ?lang=es)
         let query_lang = parts.uri.query()
             .and_then(|q| q.split('&').find(|param| param.starts_with("lang=")))
@@ -36,7 +36,7 @@ where
         let accept_lang = parts.headers
             .get(axum::http::header::ACCEPT_LANGUAGE)
             .and_then(|h| h.to_str().ok())
-            .unwrap_or("en"); // Fallback to standard english default if missing
+            .unwrap_or("en"); // Fallback to standard English default if missing
 
         let best_match = parse_accept_language(accept_lang);
         Ok(Locale(best_match))

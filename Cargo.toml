@@ -27,6 +27,7 @@ image = { version = "0.25" }
 moka = { version = "0.12", features = ["future"] }
 anyhow = { version = "1.0" }
 tracing = { version = "0.1" }
-tracing-subscriber = { version = "0.3" }
+# Enabled "env-filter" natively
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenvy = { version = "0.15" }
-toml = { version = "0.8" } # Added to workspace dependencies
+toml = { version = "0.8" }

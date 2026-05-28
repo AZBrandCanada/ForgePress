@@ -1,34 +1,35 @@
 // /forgepress-core/src/database/pages.rs
 use sqlx::AnyPool;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde_json::Value;
-use sqlx::types::Json;
 use crate::error::AppError;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
 pub struct Page {
-    pub id: String, // Changed to String
+    pub id: String,
     pub title: String,
     pub slug: String,
     pub status: String,
-    pub author_id: Option<String>, // Changed to Option<String>
-    pub content: Json<Value>,
-    pub meta: Json<Value>,
-    pub published_at: Option<DateTime<Utc>>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub author_id: Option<String>,
+    pub content: String, // Changed from Json<Value> to String
+    pub meta: String,    // Changed from Json<Value> to String
+    pub published_at: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
 }
 
 pub async fn create_page(
     pool: &AnyPool,
     title: &str,
     slug: &str,
-    author_id: Option<String>, // Changed to Option<String>
+    author_id: Option<String>,
 ) -> Result<Page, AppError> {
     let id = uuid::Uuid::new_v4().to_string();
-    let now = Utc::now();
-    let default_content = Json(serde_json::json!([]));
-    let default_meta = Json(serde_json::json!({}));
+    let now = Utc::now().to_rfc3339();
+    
+    // Default structure templates serialized as standard Strings
+    let default_content = "[]".to_string();
+    let default_meta = "{}".to_string();
 
     sqlx::query(
         "INSERT INTO pages (id, title, slug, status, author_id, content, meta, created_at, updated_at) \
@@ -40,8 +41,8 @@ pub async fn create_page(
     .bind(&author_id)
     .bind(&default_content)
     .bind(&default_meta)
-    .bind(now)
-    .bind(now)
+    .bind(&now)
+    .bind(&now)
     .execute(pool)
     .await?;
 
@@ -54,7 +55,7 @@ pub async fn create_page(
         content: default_content,
         meta: default_meta,
         published_at: None,
-        created_at: now,
+        created_at: now.clone(),
         updated_at: now,
     })
 }
@@ -69,15 +70,21 @@ pub async fn get_page_by_slug(pool: &AnyPool, slug: &str) -> Result<Option<Page>
 
 pub async fn update_page(
     pool: &AnyPool,
-    id: &str, // Changed to String slice
+    id: &str,
     title: &str,
     slug: &str,
     status: &str,
     content: Value,
     meta: Value,
 ) -> Result<(), AppError> {
-    let now = Utc::now();
-    let published_at = if status == "published" { Some(now) } else { None };
+    let now = Utc::now().to_rfc3339();
+    let published_at = if status == "published" { Some(now.clone()) } else { None };
+
+    // Serialize JSON payloads to safe database-portable Strings on the fly
+    let content_str = serde_json::to_string(&content)
+        .map_err(|e| AppError::Internal(format!("Failed to serialize page content: {}", e)))?;
+    let meta_str = serde_json::to_string(&meta)
+        .map_err(|e| AppError::Internal(format!("Failed to serialize page metadata: {}", e)))?;
 
     sqlx::query(
         "UPDATE pages SET title = $1, slug = $2, status = $3, content = $4, meta = $5, \
@@ -86,10 +93,10 @@ pub async fn update_page(
     .bind(title)
     .bind(slug)
     .bind(status)
-    .bind(Json(content))
-    .bind(Json(meta))
+    .bind(&content_str)
+    .bind(&meta_str)
     .bind(published_at)
-    .bind(now)
+    .bind(&now)
     .bind(id)
     .execute(pool)
     .await?;

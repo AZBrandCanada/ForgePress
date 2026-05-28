@@ -24,7 +24,8 @@ wasmtime::component::bindgen!({
     world: "plugin-world"
 });
 
-pub use forgepress::plugin::render_filter::BlockData;
+// Fixed: Resolved generated module namespace paths locally
+pub use self::exports::forgepress::plugin::render_filter::BlockData;
 
 pub async fn execute_wasm_filter(
     wasm_bytes: &[u8],
@@ -43,14 +44,13 @@ pub async fn execute_wasm_filter(
     let linker = Linker::new(&engine);
     let mut store = Store::new(&engine, ());
 
-    // Fixed: Replaced instantiate_async with instantiate, and removed the redundant .await
     let (plugin, _) = PluginWorld::instantiate(&mut store, &component, &linker)
         .map_err(|e| AppError::Plugin(format!("Wasm instantiation failed: {}", e)))?;
 
     let interface = plugin.forgepress_plugin_render_filter();
+    
     let filtered_blocks = interface
         .call_filter_blocks(&mut store, &blocks)
-        .await
         .map_err(|e| AppError::Plugin(format!("Wasm runtime execution crashed: {}", e)))?;
 
     Ok(filtered_blocks)

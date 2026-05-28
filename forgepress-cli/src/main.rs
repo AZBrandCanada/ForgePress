@@ -5,7 +5,7 @@ use uuid::Uuid;
 use chrono::Utc;
 use sqlx::any::{install_default_drivers, AnyPoolOptions};
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, SaltString},
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
 
@@ -19,7 +19,6 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Registers a new administrative user directly into the database.
     CreateAdmin {
         #[arg(short, long)]
         username: String,
@@ -28,14 +27,11 @@ enum Commands {
         #[arg(short, long)]
         password: String,
     },
-    /// Scaffolds a structured, ready-to-edit template theme directory.
     InstallTheme {
         #[arg(short, long)]
         name: String,
     },
-    /// Sends a signed request to invalidate server memory cache dynamically.
     ClearCache {
-        /// Targeted page slug to invalidate, or "all" to purge completely
         #[arg(short, long, default_value = "all")]
         target: String,
     },
@@ -43,7 +39,7 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    let _ = dotenvy::dotenv(); // Load .env configuration
+    let _ = dotenvy::dotenv(); 
     let cli = Cli::parse();
 
     match cli.command {
@@ -59,7 +55,6 @@ async fn main() -> Result<(), anyhow::Error> {
                 .connect(&db_url)
                 .await?;
 
-            // 1. Hash password securely using Argon2id
             let salt = SaltString::generate(&mut OsRng);
             let argon2_hash = Argon2::default()
                 .hash_password(password.as_bytes(), &salt)
@@ -67,9 +62,9 @@ async fn main() -> Result<(), anyhow::Error> {
                 .to_string();
 
             let id = Uuid::new_v4().to_string();
-            let now = Utc::now();
+            // Fixed: Converted to ISO 8601 string to satisfy SQLx Any
+            let now = Utc::now().to_rfc3339();
 
-            // 2. Insert user record with Administrator role
             sqlx::query(
                 "INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at) \
                  VALUES ($1, $2, $3, $4, 'Administrator', $5, $6)"
@@ -78,8 +73,8 @@ async fn main() -> Result<(), anyhow::Error> {
             .bind(username.clone())
             .bind(email)
             .bind(argon2_hash)
-            .bind(now)
-            .bind(now)
+            .bind(&now) // Bind RFC3339 string references
+            .bind(&now)
             .execute(&pool)
             .await?;
 
@@ -97,12 +92,10 @@ async fn main() -> Result<(), anyhow::Error> {
                 std::process::exit(1);
             }
 
-            // Create structure paths
             std::fs::create_dir_all(theme_dir.join("templates/layouts"))?;
             std::fs::create_dir_all(theme_dir.join("templates/blocks"))?;
             std::fs::create_dir_all(theme_dir.join("assets"))?;
 
-            // Write theme manifest (theme.toml)
             let theme_toml_path = theme_dir.join("theme.toml");
             let theme_manifest = format!(
                 "name = \"{}\"\nversion = \"1.0.0\"\nauthor = \"Admin\"\ncompatible_builders = [\"default-visual-builder\"]\n",
@@ -110,7 +103,6 @@ async fn main() -> Result<(), anyhow::Error> {
             );
             std::fs::write(&theme_toml_path, theme_manifest)?;
 
-            // Write template entry point placeholder
             let base_html_path = theme_dir.join("templates/layouts/base.html");
             std::fs::write(&base_html_path, "<!-- Scaffolded base wrapper layout -->\n")?;
 
@@ -127,7 +119,6 @@ async fn main() -> Result<(), anyhow::Error> {
             let client = reqwest::Client::new();
             let url = format!("http://localhost:{}/api/webhooks/cache-purge", port);
 
-            // Construct payload utilizing our private SECRET_KEY signature
             let payload = serde_json::json!({
                 "secret": secret,
                 "target": target
