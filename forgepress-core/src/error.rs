@@ -1,0 +1,89 @@
+// /forgepress-core/src/error.rs
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
+use axum::Json;
+use serde_json::json;
+use tracing::error;
+
+/// Centralized error handling enum for all ForgePress operations.
+#[derive(Debug)]
+pub enum AppError {
+    /// Wrapped SQLx database errors (Postgres / SQLite).
+    Database(sqlx::Error),
+    /// Wrapped template compilation or rendering failures.
+    Template(minijinja::Error),
+    /// Authentication, authorization, or token-related failures.
+    Auth(String),
+    /// File uploading or file system errors.
+    Io(std::io::Error),
+    /// Requested resource is missing.
+    NotFound(String),
+    /// Internal script (Rhai) or WebAssembly execution errors.
+    Plugin(String),
+    /// Generic unhandled exception.
+    Internal(String),
+}
+
+// Implement standard From traits to support ergonomic "?" operator propagation in handlers.
+
+impl From<sqlx::Error> for AppError {
+    fn from(err: sqlx::Error) -> Self {
+        AppError::Database(err)
+    }
+}
+
+impl From<minijinja::Error> for AppError {
+    fn from(err: minijinja::Error) -> Self {
+        AppError::Template(err)
+    }
+}
+
+impl From<std::io::Error> for AppError {
+    fn from(err: std::io::Error) -> Self {
+        AppError::Io(err)
+    }
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        let (status, error_message) = match self {
+            AppError::Database(ref err) => {
+                // SECURITY: Log the detailed database query error inside the server...
+                error!("Database Exception: {:?}", err);
+                // ...but return a sanitized, non-disclosing message to the API client.
+                (StatusCode::INTERNAL_SERVER_ERROR, "A database processing error occurred.".to_string())
+            }
+            AppError::Template(ref err) => {
+                error!("Template Exception: {:?}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, "A rendering template error occurred.".to_string())
+            }
+            AppError::Auth(msg) => {
+                error!("Auth Exception: {}", msg);
+                (StatusCode::UNAUTHORIZED, msg)
+            }
+            AppError::Io(ref err) => {
+                error!("I/O Exception: {:?}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, "A file system operations error occurred.".to_string())
+            }
+            AppError::NotFound(msg) => {
+                (StatusCode::NOT_FOUND, msg)
+            }
+            AppError::Plugin(msg) => {
+                error!("Plugin Sandbox Exception: {}", msg);
+                (StatusCode::BAD_GATEWAY, "An error occurred inside an active plugin extension.".to_string())
+            }
+            AppError::Internal(msg) => {
+                error!("Internal Server Exception: {}", msg);
+                (StatusCode::INTERNAL_SERVER_ERROR, "An internal server error occurred.".to_string())
+            }
+        };
+
+        // Construct standard, clean JSON payloads for API error responses
+        let body = Json(json!({
+            "status": "error",
+            "message": error_message
+        }));
+
+        (status, body).into_response()
+    }
+}

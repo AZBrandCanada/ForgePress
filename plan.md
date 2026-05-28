@@ -43,15 +43,20 @@ scripts
 │   ├── Cargo.toml
 │   └── src/
 │       ├── main.rs                          # Bootstraps Axum, connects DB, starts cron jobs
-│       ├── app_state.rs                     # Handles DB pool, Cache, Template engine, Wasm engine
+│       ├── app_state.rs                     # Handles DB pool, Cache,
+--------------------------------------
+ Template engine, Wasm engine
 │       ├── config.rs                        # Safely parses env vars and system variables
 │       ├── error.rs                         # Custom Enum to map DB, Auth, & Rendering errors
+
+-----------------------------
 │       │
 │       ├── auth/                            # Access Control Lists (ACL) & User Security
 │       │   ├── mod.rs
 │       │   ├── middleware.rs                # JWT / Session validations for /admin endpoints
 │       │   ├── passwords.rs                 # Argon2 hashing utilities
 │       │   └── roles.rs                     # Maps Roles: Admin, Editor, Contributor, Subscriber
+----------------------
 │       │
 │       ├── database/                        # Database interactions (SQLx implementation)
 │       │   ├── mod.rs
