@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-
+#rustup target add wasm32-wasip2
 echo "=========================================================="
 echo "          ForgePress Compilation & Build Script           "
 echo "=========================================================="
