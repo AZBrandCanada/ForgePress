@@ -74,9 +74,10 @@
   }
 
   // 3. Open selected page in the block editor
+// 3. Open selected page in the block editor (Updated with new /by-slug/ namespace)
   async function openEditor(page) {
     try {
-      const res = await fetch(`${API_BASE}/admin/pages/${page.slug}`, {
+      const res = await fetch(`${API_BASE}/admin/pages/by-slug/${page.slug}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-
+touch content/forgepress.db
 echo "=========================================================="
 echo "            Starting ForgePress Dev Environment           "
 echo "=========================================================="

@@ -17,7 +17,8 @@ pub fn router(state: AppState) -> Router<AppState> {
     let protected_routes = Router::new()
         // Page Builder Endpoints
         .route("/pages", post(pages::create_page))
-        .route("/pages/:slug", get(pages::get_page))
+        // Fixed: Moved the slug endpoint into its own sub-route namespace to prevent conflicts with :id
+        .route("/pages/by-slug/:slug", get(pages::get_page))
         .route("/pages/:id", put(pages::save_page).delete(pages::remove_page))
         // Media Upload Endpoints
         .route("/media/upload", post(media::upload))
