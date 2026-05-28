@@ -1,0 +1,28 @@
+# /forgepress-core/Cargo.toml
+[package]
+name = "forgepress-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Inherited Workspace Dependencies
+tokio = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+config = { workspace = true }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+argon2 = { workspace = true }
+jsonwebtoken = { workspace = true }
+minijinja = { workspace = true }
+rhai = { workspace = true }
+wasmtime = { workspace = true }
+image = { workspace = true }
+moka = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

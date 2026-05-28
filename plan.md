@@ -6,7 +6,9 @@ forgepress/                                  # Workspace Root
 │   │   ├── 0001_create_users_table.sql
 │   │   ├── 0002_create_pages_table.sql
 │   │   └── 0003_create_taxonomies_table.sql
-│   └── sqlite/                              # Mirror SQLite migration scripts
+│   └── sqlite/                              # Mirror SQLite migration 
+------------------------------------
+scripts
 │
 ├── content/                                 # User-managed directory (Matches "wp-content")
 │   ├── uploads/                             # Dynamic media assets directory
@@ -36,6 +38,7 @@ forgepress/                                  # Workspace Root
 │           ├── handler.rhai                 # Active Rhai scripting logic
 │           └── assets/                      # Frontend script/styling for block rendering
 │
+--------------------------------------
 ├── forgepress-core/                         # The main Rust engine (Binary)
 │   ├── Cargo.toml
 │   └── src/
