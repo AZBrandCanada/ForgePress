@@ -21,8 +21,7 @@ fi
 # Fedora defaults to 'peer' or 'ident' auth, which blocks password connection strings.
 # We replace these with 'md5' so the Rust string "postgres://forge_user:forge_pass@..." is accepted.
 echo "Configuring authentication permissions (switching peer/ident to md5)..."
-sudo sed -i 's/ident/md5/g' /var/lib/pgsql/data/pg_hba.conf
-sudo sed -i 's/peer/md5/g' /var/lib/pgsql/data/pg_hba.conf
+
 
 # 4. Enable and Start the Systemd Service
 echo "Enabling and starting PostgreSQL service..."
@@ -41,7 +40,8 @@ sudo -u postgres psql -c "CREATE DATABASE forgepress_db OWNER forge_user;"
 
 # Grant all schemas access (PostgreSQL 15+ permission restriction security safety)
 sudo -u postgres psql -d forgepress_db -c "GRANT ALL ON SCHEMA public TO forge_user;"
-
+sudo sed -i 's/ident/md5/g' /var/lib/pgsql/data/pg_hba.conf
+sudo sed -i 's/peer/md5/g' /var/lib/pgsql/data/pg_hba.conf
 # 6. Restart Service to Apply Auth Configuration
 echo "Restarting PostgreSQL to apply configurations..."
 sudo systemctl restart postgresql
