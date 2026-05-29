@@ -1,7 +1,7 @@
 // /forgepress-core/src/routing/public/renderer.rs
 use std::future::Future;
 use std::pin::Pin;
-use minijinja::{context, Environment};
+use minijinja::context;
 use serde_json::Value;
 use tracing::{warn, error, debug};
 

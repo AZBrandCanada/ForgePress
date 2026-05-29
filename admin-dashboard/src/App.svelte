@@ -10,6 +10,7 @@
   const API_BASE = 'http://localhost:8080/api';
   let token = localStorage.getItem('fp_token') || '';
   let pages = [];
+  let blockRegistry = []; // Dynamically populated from backend scan
   let selectedPage = null;
   let activeTab = 'pages'; // 'pages', 'plugins', 'settings'
   let activeView = 'list'; // 'list' or 'editor'
@@ -33,6 +34,7 @@
   onMount(() => {
     if (token) {
       loadPages();
+      loadBlockRegistry(); // Load blocks dynamically
     }
   });
 
@@ -55,6 +57,18 @@
     }
   }
 
+  // Dynamically fetch blocks from Rust server theme scan
+  async function loadBlockRegistry() {
+    const { ok, data } = await safeFetch(`${API_BASE}/admin/themes/blocks`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (ok) {
+      blockRegistry = data.data || [];
+    } else {
+      console.error('Failed to load dynamic block schemas:', data.message);
+    }
+  }
+
   async function handleLogin() {
     authError = '';
     const { ok, data } = await safeFetch(`${API_BASE}/auth/login`, {
@@ -67,6 +81,7 @@
       token = data.token;
       localStorage.setItem('fp_token', token);
       loadPages();
+      loadBlockRegistry(); // Load blocks on login
     } else {
       authError = data.message || 'Login failed.';
     }
@@ -174,13 +189,27 @@
   async function openEditor(page) {
     editorError = '';
     
-    // If it's the root homepage (empty slug), bypass the network lookup
-    // to avoid URL path routing mismatches on the server (e.g. GET /by-slug/)
+    // Helper function to safely parse dynamic JSONB payloads and ensure SEO fields exist
+    const parsePagePayload = (p) => {
+      p.content = typeof p.content === 'string' ? JSON.parse(p.content) : p.content || [];
+      if (!p.meta) {
+        p.meta = {};
+      } else if (typeof p.meta === 'string') {
+        try {
+          p.meta = JSON.parse(p.meta);
+        } catch (e) {
+          p.meta = {};
+        }
+      }
+      p.meta.seo_title = p.meta.seo_title || '';
+      p.meta.seo_description = p.meta.seo_description || '';
+      p.meta.social_image = p.meta.social_image || '';
+      return p;
+    };
+
     if (page.slug === '') {
-      selectedPage = { ...page };
-      editorBlocks = typeof selectedPage.content === 'string' 
-        ? JSON.parse(selectedPage.content) 
-        : selectedPage.content || [];
+      selectedPage = parsePagePayload({ ...page });
+      editorBlocks = selectedPage.content;
       activeView = 'editor';
       return;
     }
@@ -191,18 +220,13 @@
     });
 
     if (ok) {
-      selectedPage = data.data;
-      editorBlocks = typeof selectedPage.content === 'string' 
-        ? JSON.parse(selectedPage.content) 
-        : selectedPage.content || [];
+      selectedPage = parsePagePayload(data.data);
+      editorBlocks = selectedPage.content;
       activeView = 'editor';
     } else {
       console.warn('Failed API fetch for slug, falling back to local page cache...', data.message);
-      
-      selectedPage = { ...page };
-      editorBlocks = typeof selectedPage.content === 'string' 
-        ? JSON.parse(selectedPage.content) 
-        : selectedPage.content || [];
+      selectedPage = parsePagePayload({ ...page });
+      editorBlocks = selectedPage.content;
       activeView = 'editor';
     }
   }
@@ -244,13 +268,7 @@
     background-color: #f3f4f6;
     padding: 30px;
     box-sizing: border-box;
-  }
-  .card {
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 24px;
-    margin-bottom: 20px;
+    transition: all 0.15s ease-out;
   }
 </style>
 
@@ -259,9 +277,13 @@
     <Login {handleLogin} bind:username bind:password {authError} />
   {:else}
     <div class="app-layout" style="width: 100%;">
-      <Sidebar bind:activeTab bind:activeView bind:selectedPage {handleLogout} />
+      <!-- CONDITIONALLY HIDES SIDEBAR: District-free layout editor screen -->
+      {#if activeView !== 'editor'}
+        <Sidebar bind:activeTab bind:activeView bind:selectedPage {handleLogout} />
+      {/if}
 
-      <div class="main-content">
+      <!-- DYNAMIC WRAPPER STYLES: Removes padding and matches workspace dark mode if inside editor -->
+      <div class="main-content" style={activeView === 'editor' ? 'padding: 0; background: #0f172a;' : ''}>
         {#if activeTab === 'pages'}
           {#if activeView === 'list'}
             <PageList 
@@ -281,6 +303,7 @@
               bind:selectedPage 
               bind:editorBlocks 
               bind:activeView 
+              {blockRegistry} 
               {savePageLayout} 
               {saveStatus} 
             />

@@ -1,0 +1,11 @@
+{
+  "name": "Embed Video",
+  "type": "video",
+  "category": "Media",
+  "settings": [
+    { "key": "width", "label": "Max Width (%)", "type": "range", "min": 30, "max": 100, "step": 5, "default": "100" }
+  ],
+  "data": [
+    { "key": "embed_url", "label": "YouTube/Vimeo Embed URL", type: "text", "default": "https://www.youtube.com/embed/dQw4w9WgXcQ" }
+  ]
+}

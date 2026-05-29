@@ -1,0 +1,14 @@
+{
+  "name": "Hero Section",
+  "type": "hero_section",
+  "category": "Layout",
+  "settings": [
+    { "key": "background", "label": "Background Color", "type": "color", "default": "#4f46e5" },
+    { "key": "padding_v", "label": "Vertical Padding (px)", "type": "range", "min": 10, "max": 200, "step": 5, "default": "80" },
+    { "key": "padding_h", "label": "Horizontal Padding (px)", "type": "range", "min": 0, "max": 100, "step": 5, "default": "20" },
+    { "key": "flex_direction", "label": "Flex Direction", "type": "select", "options": [ { "label": "Column (Stacked)", "value": "column" }, { "label": "Row (Side-by-Side)", "value": "row" } ], "default": "column" },
+    { "key": "justify_content", "label": "Justify Content", "type": "select", "options": [ { "label": "Center", "value": "center" }, { "label": "Top/Left", "value": "flex-start" }, { "label": "Bottom/Right", "value": "flex-end" } ], "default": "center" },
+    { "key": "align_items", "label": "Align Items", "type": "select", "options": [ { "label": "Center", "value": "center" }, { "label": "Start", "value": "flex-start" }, { "label": "End", "value": "flex-end" } ], "default": "center" }
+  ],
+  "data": []
+}

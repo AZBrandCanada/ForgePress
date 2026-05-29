@@ -1,0 +1,15 @@
+{
+  "name": "Image",
+  "type": "image",
+  "category": "Media",
+  "settings": [
+    { "key": "width", "label": "Max Width (%)", "type": "range", "min": 10, "max": 100, "step": 5, "default": "100" },
+    { "key": "radius", "label": "Corner Rounding (px)", "type": "range", "min": 0, "max": 100, "step": 2, "default": "8" },
+    { "key": "align", "label": "Alignment", "type": "select", "options": [ { "label": "Left", "value": "left" }, { "label": "Center", "value": "center" }, { "label": "Right", "value": "right" } ], "default": "center" },
+    { "key": "margin_v", "label": "Vertical Margin (px)", "type": "range", "min": 0, "max": 100, "step": 1, "default": "15" }
+  ],
+  "data": [
+    { "key": "url", "label": "Image Source URL", "type": "text", "default": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80" },
+    { "key": "alt", "label": "Alt Description (SEO)", "type": "text", "default": "Workspace" }
+  ]
+}

@@ -21,7 +21,7 @@ pub fn router(state: AppState) -> Router<AppState> {
         
         // ADDED: Endpoint to handle safe-swapping homepages in database
         .route("/pages/:id/set-homepage", post(pages::set_homepage))
-        
+        .route("/themes/blocks", get(pages::list_blocks))
         .route("/media/upload", post(media::upload))
         .route_layer(axum::middleware::from_fn_with_state(
             state,

@@ -10,6 +10,7 @@ use crate::app_state::AppState;
 use crate::auth::{require_role_permission, Claims, Permission};
 use crate::database::pages as db_pages;
 use crate::error::AppError;
+use std::fs;
 
 #[derive(Deserialize)]
 pub struct CreatePageRequest {
@@ -26,7 +27,7 @@ pub struct UpdatePageRequest {
     pub meta: Value,
 }
 
-// NEW: Handles GET /api/admin/pages requests, returning metadata list
+// Handles GET /api/admin/pages requests, returning metadata list
 pub async fn list_pages(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -174,7 +175,6 @@ pub async fn remove_page(
         "message": "Page deleted successfully."
     })))
 }
-// Append to /forgepress-core/src/routing/admin_api/pages.rs
 
 /// Atomically de-registers any existing homepage and sets the selected page as the new homepage.
 pub async fn set_homepage(
@@ -230,5 +230,51 @@ pub async fn set_homepage(
     Ok(Json(json!({
         "status": "success",
         "message": "Page successfully configured as the front homepage."
+    })))
+}
+
+/// Recursively scans and parses the block JSON schemas inside the active theme.
+pub async fn get_block_registry() -> Result<Value, AppError> {
+    let content_dir = std::env::var("CONTENT_DIR").unwrap_or_else(|_| "./content".to_string());
+    
+    // Explicit std::path::Path usage resolves the Axum type namespace collision
+    let blocks_dir = std::path::Path::new(&content_dir)
+        .join("themes")
+        .join("default")
+        .join("templates")
+        .join("blocks");
+
+    let mut registry = Vec::new();
+
+    if blocks_dir.exists() && blocks_dir.is_dir() {
+        if let Ok(entries) = fs::read_dir(blocks_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                // Dynamically find and read all companion .json files
+                if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("json") {
+                    if let Ok(content) = fs::read_to_string(&path) {
+                        // Safe type parsing directly on the deserialization call
+                        if let Ok(schema) = serde_json::from_str::<Value>(&content) {
+                            registry.push(schema);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(serde_json::Value::Array(registry))
+}
+
+/// Axum controller to deliver block schemas to the Svelte page builder.
+pub async fn list_blocks(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Json<Value>, AppError> {
+    crate::auth::require_role_permission(&claims, crate::auth::Permission::ReadPosts)?;
+    let registry = get_block_registry().await?;
+    Ok(Json(json!({
+        "status": "success",
+        "data": registry
     })))
 }

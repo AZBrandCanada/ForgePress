@@ -1,11 +1,12 @@
 <!-- content/themes/default/templates/blocks/heading.html -->
-<h1 class="forge-heading" style="
-    margin: 0; 
-    font-size: 44px; 
+<h1 style="
+    margin: {{ settings.margin_v | default('15') }}px 0; 
+    font-size: {{ settings.font_size | default('32') }}px; 
     font-weight: 800; 
-    text-align: center;
-    color: inherit;
+    text-align: {{ settings.text_align | default('center') }};
+    color: {{ settings.color | default('#0f172a') }};
     line-height: 1.2;
+    width: 100%;
 ">
-    {{ data.text | default('Visual Layout Heading') }}
+    {{ data.text | default('Heading Placeholder') }}
 </h1>

@@ -1,0 +1,14 @@
+<!-- content/themes/default/templates/blocks/button.html -->
+<div style="text-align: {{ settings.align | default('center') }}; margin: {{ settings.margin_v | default('15') }}px 0; width: 100%; box-sizing: border-box;">
+    <a href="{{ data.url | default('#') }}" style="
+        background-color: {{ settings.bg | default('#4f46e5') }};
+        color: {{ settings.color | default('#ffffff') }};
+        border-radius: {{ settings.radius | default('6') }}px;
+        padding: {{ settings.padding_v | default('10') }}px {{ settings.padding_h | default('20') }}px;
+        display: inline-block;
+        font-weight: bold;
+        text-decoration: none;
+    ">
+        {{ data.text | default('Click Here') }}
+    </a>
+</div>

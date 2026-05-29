@@ -1,0 +1,14 @@
+{
+  "name": "Heading",
+  "type": "heading",
+  "category": "Basic Elements",
+  "settings": [
+    { "key": "color", "label": "Text Color", "type": "color", "default": "#0f172a" },
+    { "key": "font_size", "label": "Font Size (px)", "type": "range", "min": 16, "max": 96, "step": 1, "default": "32" },
+    { "key": "text_align", "label": "Text Align", "type": "select", "options": [ { "label": "Left", "value": "left" }, { "label": "Center", "value": "center" }, { "label": "Right", "value": "right" } ], "default": "center" },
+    { "key": "margin_v", "label": "Vertical Margin (px)", "type": "range", "min": 0, "max": 100, "step": 1, "default": "15" }
+  ],
+  "data": [
+    { "key": "text", "label": "Heading Text", "type": "text", "default": "Custom Visual Heading" }
+  ]
+}

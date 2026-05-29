@@ -1,0 +1,9 @@
+<!-- content/themes/default/templates/blocks/image.html -->
+<div style="text-align: {{ settings.align | default('center') }}; margin: {{ settings.margin_v | default('15') }}px 0; width: 100%; box-sizing: border-box;">
+    <img src="{{ data.url }}" alt="{{ data.alt }}" style="
+        max-width: {{ settings.width | default('100') }}%;
+        height: auto;
+        border-radius: {{ settings.radius | default('8') }}px;
+        display: inline-block;
+    " />
+</div>

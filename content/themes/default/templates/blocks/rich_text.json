@@ -1,0 +1,14 @@
+{
+  "name": "Paragraph",
+  "type": "rich_text",
+  "category": "Basic Elements",
+  "settings": [
+    { "key": "color", "label": "Text Color", "type": "color", "default": "#333333" },
+    { "key": "font_size", "label": "Font Size (px)", "type": "range", "min": 10, "max": 72, "step": 1, "default": "16" },
+    { "key": "text_align", "label": "Text Align", "type": "select", "options": [ { "label": "Left", "value": "left" }, { "label": "Center", "value": "center" }, { "label": "Right", "value": "right" } ], "default": "left" },
+    { "key": "margin_v", "label": "Vertical Margin (px)", "type": "range", "min": 0, "max": 100, "step": 1, "default": "15" }
+  ],
+  "data": [
+    { "key": "text", "label": "Text Content", "type": "textarea", "default": "This is a new, editable rich text paragraph." }
+  ]
+}
