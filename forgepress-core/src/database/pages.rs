@@ -30,13 +30,16 @@ pub async fn create_page(
     let default_content = "[]".to_string();
     let default_meta = "{}".to_string();
 
+    // Sanitize slug by removing any leading slashes
+    let clean_slug = slug.trim_start_matches('/');
+
     sqlx::query(
         "INSERT INTO pages (id, title, slug, status, author_id, content, meta, created_at, updated_at) \
          VALUES (CAST($1 AS uuid), $2, $3, $4, CAST($5 AS uuid), CAST($6 AS jsonb), CAST($7 AS jsonb), CAST($8 AS timestamptz), CAST($9 AS timestamptz))"
     )
     .bind(&id)
     .bind(title)
-    .bind(slug)
+    .bind(clean_slug)
     .bind("draft") 
     .bind(&author_id)
     .bind(&default_content)
@@ -49,7 +52,7 @@ pub async fn create_page(
     Ok(Page {
         id,
         title: title.to_string(),
-        slug: slug.to_string(),
+        slug: clean_slug.to_string(),
         status: "draft".to_string(),
         author_id: author_id.unwrap_or_default(),
         content: default_content,
@@ -61,6 +64,9 @@ pub async fn create_page(
 }
 
 pub async fn get_page_by_slug(pool: &AnyPool, slug: &str) -> Result<Option<Page>, AppError> {
+    // Sanitize slug by removing any leading slashes
+    let clean_slug = slug.trim_start_matches('/');
+
     let page = sqlx::query_as::<_, Page>(
         "SELECT CAST(id AS VARCHAR) AS id, title, slug, status, \
          COALESCE(CAST(author_id AS VARCHAR), '') AS author_id, \
@@ -71,7 +77,7 @@ pub async fn get_page_by_slug(pool: &AnyPool, slug: &str) -> Result<Option<Page>
          CAST(updated_at AS VARCHAR) AS updated_at \
          FROM pages WHERE slug = $1"
     )
-    .bind(slug)
+    .bind(clean_slug)
     .fetch_optional(pool)
     .await?;
     Ok(page)
@@ -111,6 +117,9 @@ pub async fn update_page(
     let meta_str = serde_json::to_string(&meta)
         .map_err(|e| AppError::Internal(format!("Failed to serialize page metadata: {}", e)))?;
 
+    // Sanitize slug by removing any leading slashes
+    let clean_slug = slug.trim_start_matches('/');
+
     sqlx::query(
         "UPDATE pages SET title = $1, slug = $2, status = $3, \
          content = CAST($4 AS jsonb), meta = CAST($5 AS jsonb), \
@@ -118,7 +127,7 @@ pub async fn update_page(
          updated_at = CAST($7 AS timestamptz) WHERE id = CAST($8 AS uuid)"
     )
     .bind(title)
-    .bind(slug)
+    .bind(clean_slug)
     .bind(status)
     .bind(&content_str)
     .bind(&meta_str)

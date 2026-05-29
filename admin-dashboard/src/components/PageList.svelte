@@ -3,6 +3,7 @@
   export let pages = [];
   export let openEditor;
   export let handleCreatePage;
+  export let handleDeletePage; // ADDED: delete handler prop
   export let showCreateModal = false;
   export let newTitle = '';
   export let newSlug = '';
@@ -61,14 +62,21 @@
         {#each pages as page}
           <tr style="border-bottom: 1px solid #e5e7eb;">
             <td style="padding: 12px; font-weight: 600;">{page.title}</td>
-            <td style="padding: 12px; color: #4b5563;">/{page.slug}</td>
+            <!-- Inside /admin-dashboard/src/components/PageList.svelte -->
+            <td style="padding: 12px; color: #4b5563;">
+            {(page.slug === '/index' || page.slug === 'index' || page.slug === '/' || page.slug === '') 
+                ? '/' 
+                : (page.slug.startsWith('/') ? page.slug : '/' + page.slug)}
+            </td>
             <td style="padding: 12px;">
               <span style="background: {page.status === 'published' ? '#d1fae5' : '#fee2e2'}; color: {page.status === 'published' ? '#065f46' : '#991b1b'}; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;">
                 {page.status}
               </span>
             </td>
-            <td style="padding: 12px; text-align: right;">
+            <td style="padding: 12px; text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
               <button class="btn" on:click={() => openEditor(page)}>Edit Layout</button>
+              <!-- ADDED: Delete button -->
+              <button class="btn btn-danger" on:click={() => handleDeletePage(page.id)}>Delete</button>
             </td>
           </tr>
         {/each}
@@ -106,6 +114,10 @@
   .btn:hover { background: #4338ca; }
   .btn-secondary { background: #4b5563; }
   .btn-secondary:hover { background: #374151; }
+  /* ADDED: Danger button classes */
+  .btn-danger { background: #ef4444; }
+  .btn-danger:hover { background: #dc2626; }
+  
   .form-group {
     margin-bottom: 16px;
   }

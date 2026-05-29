@@ -47,6 +47,11 @@
       <label for="title">Title</label>
       <input type="text" id="title" bind:value={selectedPage.title} />
     </div>
+    <!-- ADDED: Expose the URL Slug field so you can update slugs on the fly! -->
+    <div style="flex: 1;">
+      <label for="slug">URL Slug</label>
+      <input type="text" id="slug" bind:value={selectedPage.slug} />
+    </div>
     <div style="flex: 1;">
       <label for="status">Publication Status</label>
       <select id="status" bind:value={selectedPage.status}>

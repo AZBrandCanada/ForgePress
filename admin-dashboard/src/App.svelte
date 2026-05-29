@@ -22,7 +22,7 @@
   // Page Editor State
   let editorBlocks = [];
   let saveStatus = '';
-  let editorError = ''; // ADDED: Specific validation for editor loading
+  let editorError = ''; // Specific validation for editor loading
 
   // Create Page State
   let newTitle = '';
@@ -97,12 +97,22 @@
 
   async function handleCreatePage() {
     createError = '';
-    if (!newTitle || !newSlug) {
-      createError = 'Please fill out all fields.';
+    
+    // We only require a Title. The Slug can now be empty for the homepage!
+    if (!newTitle) {
+      createError = 'Please fill out a page title.';
       return;
     }
     
-    const normalizedSlug = newSlug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_/]/g, '');
+    // Normalize slug: if they type "/" or leave it blank, treat as root homepage ("")
+    let normalizedSlug = newSlug.trim().toLowerCase();
+    if (normalizedSlug === '/' || normalizedSlug === '') {
+      normalizedSlug = '';
+    } else {
+      normalizedSlug = normalizedSlug
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-_/]/g, '');
+    }
 
     const { ok, data } = await safeFetch(`${API_BASE}/admin/pages`, {
       method: 'POST',
@@ -123,10 +133,40 @@
     }
   }
 
+  async function handleDeletePage(id) {
+    if (!confirm('Are you sure you want to permanently delete this page?')) {
+      return;
+    }
+
+    const { ok, data } = await safeFetch(`${API_BASE}/admin/pages/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (ok) {
+      loadPages(); // Refresh the list
+    } else {
+      editorError = data.message || 'Failed to delete page.';
+    }
+  }
+
   async function openEditor(page) {
     editorError = '';
     
-    // Attempt secondary slug fetch
+    // If it's the root homepage (empty slug), bypass the network lookup
+    // to avoid URL path routing mismatches on the server (e.g. GET /by-slug/)
+    if (page.slug === '') {
+      selectedPage = { ...page };
+      editorBlocks = typeof selectedPage.content === 'string' 
+        ? JSON.parse(selectedPage.content) 
+        : selectedPage.content || [];
+      activeView = 'editor';
+      return;
+    }
+    
+    // Attempt secondary slug fetch for normal pages
     const { ok, data } = await safeFetch(`${API_BASE}/admin/pages/by-slug/${page.slug}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -138,9 +178,6 @@
         : selectedPage.content || [];
       activeView = 'editor';
     } else {
-      // OPTIMISTIC FALLBACK:
-      // If the slug contains nested path separators (e.g. "blog/news") and triggers a 404 router mismatch,
-      // fall back instantly to the local page cache data retrieved from list view!
       console.warn('Failed API fetch for slug, falling back to local page cache...', data.message);
       
       selectedPage = { ...page };
@@ -212,6 +249,7 @@
               {pages} 
               {openEditor} 
               {handleCreatePage} 
+              {handleDeletePage} 
               bind:showCreateModal 
               bind:newTitle 
               bind:newSlug 
