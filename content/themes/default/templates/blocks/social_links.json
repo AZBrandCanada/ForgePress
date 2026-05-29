@@ -1,0 +1,14 @@
+{
+  "name": "Social Icons Grid",
+  "type": "social_links",
+  "category": "Media",
+  "settings": [
+    { "key": "color", "label": "Icons Color", "type": "color", "default": "#4f46e5" },
+    { "key": "align", "label": "Alignment", "type": "select", "options": [ { "label": "Center", "value": "center" }, { "label": "Left", "value": "flex-start" }, { "label": "Right", "value": "flex-end" } ], "default": "center" }
+  ],
+  "data": [
+    { "key": "twitter_url", "label": "X / Twitter link", "type": "text", "default": "https://twitter.com" },
+    { "key": "github_url", "label": "GitHub link", "type": "text", "default": "https://github.com" },
+    { "key": "youtube_url", "label": "YouTube link", "type": "text", "default": "https://youtube.com" }
+  ]
+}

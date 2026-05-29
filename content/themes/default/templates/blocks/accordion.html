@@ -1,0 +1,11 @@
+<div style="max-width: 800px; margin: {{ settings.margin_v }}px auto; padding: 0 20px; box-sizing: border-box;">
+    <details style="background: {{ settings.bg_color }}; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.2s;">
+        <summary style="padding: 16px 20px; font-weight: bold; color: {{ settings.theme_color }}; outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid transparent;">
+            <span>{{ data.summary }}</span>
+            <span style="font-size: 12px;">▼</span>
+        </summary>
+        <div style="padding: 20px; border-top: 1px solid #e2e8f0; color: #334155; line-height: 1.6;">
+            {{ data.details | safe }}
+        </div>
+    </details>
+</div>

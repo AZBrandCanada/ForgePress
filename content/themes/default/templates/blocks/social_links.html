@@ -1,0 +1,19 @@
+<div style="max-width: 800px; margin: 24px auto; padding: 0 20px; box-sizing: border-box;">
+    <div style="display: flex; gap: 24px; justify-content: {{ settings.align }}; align-items: center;">
+        {% if data.twitter_url != '#' %}
+        <a href="{{ data.twitter_url }}" target="_blank" style="color: {{ settings.color }}; font-weight: bold; font-size: 15px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>𝕏</span> Twitter
+        </a>
+        {% endif %}
+        {% if data.github_url != '#' %}
+        <a href="{{ data.github_url }}" target="_blank" style="color: {{ settings.color }}; font-weight: bold; font-size: 15px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>🐙</span> GitHub
+        </a>
+        {% endif %}
+        {% if data.youtube_url != '#' %}
+        <a href="{{ data.youtube_url }}" target="_blank" style="color: {{ settings.color }}; font-weight: bold; font-size: 15px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>▶</span> YouTube
+        </a>
+        {% endif %}
+    </div>
+</div>

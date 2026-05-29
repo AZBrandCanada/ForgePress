@@ -1,0 +1,14 @@
+{
+  "name": "Contact Inquiry Form",
+  "type": "contact_form",
+  "category": "Basic Elements",
+  "settings": [
+    { "key": "btn_bg", "label": "Button Color", "type": "color", "default": "#4f46e5" },
+    { "key": "input_bg", "label": "Input Field Background", "type": "color", "default": "#ffffff" },
+    { "key": "max_width", "label": "Form Width (px)", "type": "range", "min": 300, "max": 800, "step": 50, "default": "500" }
+  ],
+  "data": [
+    { "key": "placeholder_name", "label": "Name Field Label", "type": "text", "default": "Your Name" },
+    { "key": "placeholder_email", "label": "Email Field Label", "type": "text", "default": "Your Email Address" }
+  ]
+}

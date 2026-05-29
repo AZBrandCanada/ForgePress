@@ -1,0 +1,14 @@
+{
+  "name": "Alert / Notice Banner",
+  "type": "alert_banner",
+  "category": "Basic Elements",
+  "settings": [
+    { "key": "bg_color", "label": "Alert Color", "type": "color", "default": "#fef3c7" },
+    { "key": "text_color", "label": "Text Color", "type": "color", "default": "#78350f" },
+    { "key": "border_radius", "label": "Corner Rounding (px)", "type": "range", "min": 0, "max": 16, "step": 2, "default": "6" }
+  ],
+  "data": [
+    { "key": "icon", "label": "Emoji Indicator", "type": "text", "default": "💡" },
+    { "key": "message", "label": "Notice Message", "type": "textarea", "default": "Maintenance notice: Dynamic database updates tonight at 04:00 UTC." }
+  ]
+}

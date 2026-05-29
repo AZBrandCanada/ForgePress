@@ -1,0 +1,10 @@
+<section style="background-color: {{ settings.background }}; padding: 40px 20px; width: 100%; box-sizing: border-box;">
+    <div style="max-width: 1024px; margin: 0 auto; display: flex; flex-flow: wrap {{ settings.reverse_mobile }}; gap: {{ settings.col_gap }}px; color: {{ settings.color }};">
+        <div style="flex: 1; min-width: 280px; box-sizing: border-box;">
+            {{ data.col_1_text | safe }}
+        </div>
+        <div style="flex: 1; min-width: 280px; box-sizing: border-box;">
+            {{ data.col_2_text | safe }}
+        </div>
+    </div>
+</section>

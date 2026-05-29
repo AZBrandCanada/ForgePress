@@ -1,0 +1,15 @@
+{
+  "name": "Feature Card",
+  "type": "feature_card",
+  "category": "Basic Elements",
+  "settings": [
+    { "key": "bg_color", "label": "Card Background", "type": "color", "default": "#ffffff" },
+    { "key": "icon_color", "label": "Icon/Emoji Accent", "type": "color", "default": "#4f46e5" },
+    { "key": "border_radius", "label": "Rounding (px)", "type": "range", "min": 0, "max": 24, "step": 2, "default": "12" }
+  ],
+  "data": [
+    { "key": "icon", "label": "Emoji Icon", "type": "text", "default": "⚡" },
+    { "key": "title", "label": "Feature Title", "type": "text", "default": "Lightning Fast" },
+    { "key": "description", "label": "Feature Body", "type": "textarea", "default": "Powered by a highly compiled, dynamic Rust architecture." }
+  ]
+}

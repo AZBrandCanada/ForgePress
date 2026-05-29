@@ -1,0 +1,5 @@
+<section style="background-color: {{ settings.background }}; padding: {{ settings.padding_v }}px 20px; width: 100%; box-sizing: border-box;">
+    <div style="max-width: {{ settings.max_width }}px; margin: 0 auto; color: {{ settings.color }}; box-sizing: border-box; width: 100%;">
+        {{ nested_content | safe }}
+    </div>
+</section>

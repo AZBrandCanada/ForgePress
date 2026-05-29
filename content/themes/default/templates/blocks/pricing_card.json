@@ -1,0 +1,15 @@
+{
+  "name": "Pricing Table",
+  "type": "pricing_card",
+  "category": "Basic Elements",
+  "settings": [
+    { "key": "accent_color", "label": "Accent Color", "type": "color", "default": "#4f46e5" },
+    { "key": "bg_color", "label": "Background Color", "type": "color", "default": "#ffffff" },
+    { "key": "is_featured", "label": "Featured Highlight", "type": "select", "options": [ { "label": "Regular", "value": "none" }, { "label": "Highlighted", "value": "scale" } ], "default": "none" }
+  ],
+  "data": [
+    { "key": "plan_name", "label": "Plan Name", "type": "text", "default": "Professional" },
+    { "key": "price", "label": "Price (USD/mo)", "type": "text", "default": "$49" },
+    { "key": "feature_list", "label": "Features (comma separated)", "type": "textarea", "default": "Unlimited pages, Custom themes, 24/7 Support" }
+  ]
+}

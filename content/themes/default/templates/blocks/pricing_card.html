@@ -1,0 +1,16 @@
+<div style="max-width: 360px; margin: 30px auto; padding: 40px; background: {{ settings.bg_color }}; border: {% if settings.is_featured == 'scale' %}2px solid {{ settings.accent_color }}{% else %}1px solid #e2e8f0{% endif %}; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); box-sizing: border-box; text-align: center;">
+    <h4 style="margin: 0 0 8px 0; color: #475569; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">{{ data.plan_name }}</h4>
+    <div style="font-size: 48px; font-weight: 800; color: #0f172a; margin-bottom: 24px;">{{ data.price }}<span style="font-size: 16px; font-weight: normal; color: #475569;">/mo</span></div>
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin-bottom: 24px;" />
+    <ul style="list-style: none; padding: 0; margin: 0 0 30px 0; display: flex; flex-direction: column; gap: 12px; text-align: left; color: #334155; font-size: 15px;">
+        {% for feature in data.feature_list.split(',') %}
+        <li style="display: flex; gap: 10px; align-items: center;">
+            <span style="color: {{ settings.accent_color }}; font-weight: bold;">✓</span>
+            <span>{{ feature.strip() }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    <a href="#" style="background: {{ settings.accent_color }}; color: white; padding: 12px; border-radius: 8px; font-weight: bold; display: block; text-decoration: none;">
+        Get Started Now
+    </a>
+</div>

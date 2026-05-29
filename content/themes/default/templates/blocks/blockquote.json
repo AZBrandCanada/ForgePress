@@ -1,0 +1,14 @@
+{
+  "name": "Blockquote / Review",
+  "type": "blockquote",
+  "category": "Basic Elements",
+  "settings": [
+    { "key": "border_color", "label": "Quote Line Color", "type": "color", "default": "#4f46e5" },
+    { "key": "bg_color", "label": "Background Color", "type": "color", "default": "#f1f5f9" },
+    { "key": "font_size", "label": "Quote Size (px)", "type": "range", "min": 14, "max": 32, "step": 1, "default": "18" }
+  ],
+  "data": [
+    { "key": "quote", "label": "Quote Text", "type": "textarea", "default": "This platform completely transformed our web engine development speed." },
+    { "key": "author", "label": "Author / Citation", "type": "text", "default": "Jane Doe, CTO Tech Corp" }
+  ]
+}

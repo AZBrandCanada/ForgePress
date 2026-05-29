@@ -1,0 +1,14 @@
+{
+  "name": "Interactive Accordion",
+  "type": "accordion",
+  "category": "Basic Elements",
+  "settings": [
+    { "key": "theme_color", "label": "Theme Color", "type": "color", "default": "#4f46e5" },
+    { "key": "bg_color", "label": "Background Color", "type": "color", "default": "#ffffff" },
+    { "key": "margin_v", "label": "Vertical Margin (px)", "type": "range", "min": 5, "max": 100, "step": 5, "default": "15" }
+  ],
+  "data": [
+    { "key": "summary", "label": "Header Question", "type": "text", "default": "What is your refund policy?" },
+    { "key": "details", "label": "Hidden Answer", "type": "textarea", "default": "We offer a 30-day money-back guarantee with zero questions asked." }
+  ]
+}

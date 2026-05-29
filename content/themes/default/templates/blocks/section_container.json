@@ -1,0 +1,12 @@
+{
+  "name": "Section Container",
+  "type": "section_container",
+  "category": "Layout",
+  "settings": [
+    { "key": "background", "label": "Background Color", "type": "color", "default": "#ffffff" },
+    { "key": "color", "label": "Text Color", "type": "color", "default": "#0f172a" },
+    { "key": "padding_v", "label": "Vertical Padding (px)", "type": "range", "min": 0, "max": 200, "step": 5, "default": "40" },
+    { "key": "max_width", "label": "Max Width (px)", "type": "range", "min": 600, "max": 1400, "step": 50, "default": "1000" }
+  ],
+  "data": []
+}

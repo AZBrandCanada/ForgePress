@@ -1,0 +1,15 @@
+{
+  "name": "2 Columns Split",
+  "type": "two_columns",
+  "category": "Layout",
+  "settings": [
+    { "key": "background", "label": "Background Color", "type": "color", "default": "#f8fafc" },
+    { "key": "color", "label": "Text Color", "type": "color", "default": "#0f172a" },
+    { "key": "col_gap", "label": "Column Gap (px)", "type": "range", "min": 10, "max": 100, "step": 5, "default": "40" },
+    { "key": "reverse_mobile", "label": "Stack Reverse on Mobile", "type": "select", "options": [ { "label": "No", "value": "row" }, { "label": "Yes", "value": "row-reverse" } ], "default": "row" }
+  ],
+  "data": [
+    { "key": "col_1_text", "label": "Left Column Content", "type": "textarea", "default": "<h3>Left Column</h3><p>Configure this left-side content column via settings.</p>" },
+    { "key": "col_2_text", "label": "Right Column Content", "type": "textarea", "default": "<h3>Right Column</h3><p>Configure this right-side content column via settings.</p>" }
+  ]
+}
