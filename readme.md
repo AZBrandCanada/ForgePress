@@ -4,6 +4,7 @@
 ForgePress is a modular content management system (CMS) written in Rust. It decouples content storage and administration from content delivery, bringing systems-level performance, memory safety, and sandboxed extensibility to web publishing.
 
 Instead of traditional, regex-heavy rendering loops and rigid database structures, ForgePress uses a decoupled JSONB Block Architecture, a sandboxed WebAssembly (Wasm) and Rhai plugin engine, and an in-memory concurrently invalidated template cache.
+![Block Editor](media/5.png)
 
 ## 1. Core Architectural Paradigms
 
