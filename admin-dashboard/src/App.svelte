@@ -152,6 +152,25 @@
     }
   }
 
+  async function handleSetHomepage(id) {
+    if (!confirm('Are you sure you want to set this page as the active homepage? The existing homepage will be reverted back to a draft.')) {
+      return;
+    }
+
+    const { ok, data } = await safeFetch(`${API_BASE}/admin/pages/${id}/set-homepage`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (ok) {
+      loadPages(); // Refresh list structure
+    } else {
+      editorError = data.message || 'Failed to reconfigure homepage options.';
+    }
+  }
+
   async function openEditor(page) {
     editorError = '';
     
@@ -250,6 +269,7 @@
               {openEditor} 
               {handleCreatePage} 
               {handleDeletePage} 
+              {handleSetHomepage}
               bind:showCreateModal 
               bind:newTitle 
               bind:newSlug 

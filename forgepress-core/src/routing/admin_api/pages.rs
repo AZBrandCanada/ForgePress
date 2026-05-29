@@ -174,3 +174,61 @@ pub async fn remove_page(
         "message": "Page deleted successfully."
     })))
 }
+// Append to /forgepress-core/src/routing/admin_api/pages.rs
+
+/// Atomically de-registers any existing homepage and sets the selected page as the new homepage.
+pub async fn set_homepage(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Result<Json<Value>, AppError> {
+    require_role_permission(&claims, Permission::PublishPosts)?;
+
+    // 1. Begin database transaction
+    let mut tx = state.db.begin().await.map_err(|e| AppError::Database(e))?;
+
+    // 2. Locate any existing page matching the "index" slug
+    let existing_homepage: Option<(String, String)> = sqlx::query_as(
+        "SELECT CAST(id AS VARCHAR) as id, title FROM pages WHERE slug = 'index'"
+    )
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(|e| AppError::Database(e))?;
+
+    if let Some((old_id, _old_title)) = existing_homepage {
+        // Safe-swap: Assign a temporary archived slug and revert its status back to draft
+        let temp_slug = format!("archived-home-{}", &uuid::Uuid::new_v4().to_string()[..8]);
+        let now = chrono::Utc::now().to_rfc3339();
+
+        sqlx::query(
+            "UPDATE pages SET slug = $1, status = 'draft', updated_at = CAST($2 AS timestamptz) WHERE id = CAST($3 AS uuid)"
+        )
+        .bind(&temp_slug)
+        .bind(&now)
+        .bind(&old_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| AppError::Database(e))?;
+    }
+
+    // 3. Mark the target page as the active homepage ("index") and publish it
+    let now = chrono::Utc::now().to_rfc3339();
+    sqlx::query(
+        "UPDATE pages SET slug = 'index', status = 'published', updated_at = CAST($1 AS timestamptz) WHERE id = CAST($2 AS uuid)"
+    )
+    .bind(&now)
+    .bind(&id)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| AppError::Database(e))?;
+
+    tx.commit().await.map_err(|e| AppError::Database(e))?;
+
+    // 4. Invalidate the public-facing homepage caches
+    state.cache.invalidate("index").await;
+
+    Ok(Json(json!({
+        "status": "success",
+        "message": "Page successfully configured as the front homepage."
+    })))
+}

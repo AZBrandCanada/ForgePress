@@ -15,10 +15,12 @@ pub fn router(state: AppState) -> Router<AppState> {
 
     let protected_routes = Router::new()
         // Page Builder Endpoints
-        // Fixed: Registered GET method on the /pages path tree
         .route("/pages", get(pages::list_pages).post(pages::create_page))
         .route("/pages/by-slug/:slug", get(pages::get_page))
         .route("/pages/:id", put(pages::save_page).delete(pages::remove_page))
+        
+        // ADDED: Endpoint to handle safe-swapping homepages in database
+        .route("/pages/:id/set-homepage", post(pages::set_homepage))
         
         .route("/media/upload", post(media::upload))
         .route_layer(axum::middleware::from_fn_with_state(
