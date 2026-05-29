@@ -1,0 +1,14 @@
+<!-- content/themes/default/templates/404.html -->
+{% extends "layouts/base.html" %}
+{% block content %}
+    <div class="container" style="text-align: center; padding: 100px 20px;">
+        <h1 style="font-size: 80px; font-weight: 800; color: var(--primary); margin: 0 0 16px 0; line-height: 1;">404</h1>
+        <h2 style="font-size: 24px; font-weight: 700; margin: 0 0 16px 0;">Oops! Page Not Found</h2>
+        <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto 30px auto; font-size: 15px;">
+            The page you are looking for might have been deleted, had its slug modified, or never existed.
+        </p>
+        <a href="/" style="background: var(--primary); color: white; padding: 12px 24px; border-radius: 6px; font-weight: bold; display: inline-block;">
+            Return to Homepage
+        </a>
+    </div>
+{% endblock %}

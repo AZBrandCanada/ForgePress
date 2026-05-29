@@ -1,0 +1,13 @@
+<!-- content/themes/default/templates/blocks/rich_text.html -->
+<div class="forge-rich-text" style="
+    color: {{ settings.color | default('#333333') }}; 
+    font-size: {{ settings.font_size | default('16') }}px; 
+    text-align: {{ settings.text_align | default('left') }}; 
+    margin: {{ settings.margin_v | default('15') }}px auto;
+    max-width: 800px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    line-height: 1.6;
+">
+    {{ data.text | default('Text component placeholder content...') }}
+</div>

@@ -1,9 +1,10 @@
+<!-- content/themes/default/templates/single.html -->
 {% extends "layouts/base.html" %}
 {% block content %}
     <article class="forge-page">
-        <h1>{{ title }}</h1>
+        <!-- Renders compiled visual layout blocks cleanly -->
         <div class="page-blocks">
-            {{ body }}
+            {{ body | safe }}
         </div>
     </article>
 {% endblock %}
