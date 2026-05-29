@@ -26,6 +26,44 @@ pub struct UpdatePageRequest {
     pub meta: Value,
 }
 
+// NEW: Handles GET /api/admin/pages requests, returning metadata list
+pub async fn list_pages(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Json<Value>, AppError> {
+    // Ensure read permissions
+    require_role_permission(&claims, Permission::ReadPosts)?;
+
+    let pages_list = db_pages::get_all_pages(&state.db).await?;
+    
+    // Parse dynamic JSONB structures to deliver standard JSON objects to the client
+    let mut sanitized_list = Vec::with_capacity(pages_list.len());
+    for page in pages_list {
+        let content_value: Value = serde_json::from_str(&page.content).unwrap_or_else(|_| json!([]));
+        let meta_value: Value = serde_json::from_str(&page.meta).unwrap_or_else(|_| json!({}));
+        let author_id_opt = if page.author_id.is_empty() { None } else { Some(page.author_id) };
+        let published_at_opt = if page.published_at.is_empty() { None } else { Some(page.published_at) };
+
+        sanitized_list.push(json!({
+            "id": page.id,
+            "title": page.title,
+            "slug": page.slug,
+            "status": page.status,
+            "author_id": author_id_opt,
+            "content": content_value,
+            "meta": meta_value,
+            "published_at": published_at_opt,
+            "created_at": page.created_at,
+            "updated_at": page.updated_at
+        }));
+    }
+
+    Ok(Json(json!({
+        "status": "success",
+        "data": sanitized_list
+    })))
+}
+
 pub async fn create_page(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -45,10 +83,6 @@ pub async fn create_page(
     let content_value: Value = serde_json::from_str(&page.content).unwrap_or_else(|_| json!([]));
     let meta_value: Value = serde_json::from_str(&page.meta).unwrap_or_else(|_| json!({}));
 
-    // Fixed: Maps empty strings ("") back to serializable None/null fields for the client
-    let author_id_opt = if page.author_id.is_empty() { None } else { Some(&page.author_id) };
-    let published_at_opt = if page.published_at.is_empty() { None } else { Some(&page.published_at) };
-
     Ok(Json(json!({
         "status": "success",
         "data": {
@@ -56,10 +90,10 @@ pub async fn create_page(
             "title": page.title,
             "slug": page.slug,
             "status": page.status,
-            "author_id": author_id_opt,
+            "author_id": if page.author_id.is_empty() { None } else { Some(&page.author_id) },
             "content": content_value,
             "meta": meta_value,
-            "published_at": published_at_opt,
+            "published_at": if page.published_at.is_empty() { None } else { Some(&page.published_at) },
             "created_at": page.created_at,
             "updated_at": page.updated_at
         }
@@ -77,10 +111,6 @@ pub async fn get_page(
     let content_value: Value = serde_json::from_str(&page.content).unwrap_or_else(|_| json!([]));
     let meta_value: Value = serde_json::from_str(&page.meta).unwrap_or_else(|_| json!({}));
 
-    // Fixed: Maps empty strings ("") back to serializable None/null fields for the client
-    let author_id_opt = if page.author_id.is_empty() { None } else { Some(&page.author_id) };
-    let published_at_opt = if page.published_at.is_empty() { None } else { Some(&page.published_at) };
-
     Ok(Json(json!({ 
         "status": "success", 
         "data": {
@@ -88,10 +118,10 @@ pub async fn get_page(
             "title": page.title,
             "slug": page.slug,
             "status": page.status,
-            "author_id": author_id_opt,
+            "author_id": if page.author_id.is_empty() { None } else { Some(&page.author_id) },
             "content": content_value,
             "meta": meta_value,
-            "published_at": published_at_opt,
+            "published_at": if page.published_at.is_empty() { None } else { Some(&page.published_at) },
             "created_at": page.created_at,
             "updated_at": page.updated_at
         }

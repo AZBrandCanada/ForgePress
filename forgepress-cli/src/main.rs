@@ -65,15 +65,17 @@ async fn main() -> Result<(), anyhow::Error> {
             // Fixed: Converted to ISO 8601 string to satisfy SQLx Any
             let now = Utc::now().to_rfc3339();
 
+// Inside /forgepress-cli/src/main.rs (around line 72)
             sqlx::query(
                 "INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at) \
-                 VALUES ($1, $2, $3, $4, 'Administrator', $5, $6)"
+                VALUES (CAST($1 AS uuid), $2, $3, $4, 'Administrator', CAST($5 AS timestamptz), CAST($6 AS timestamptz))"
             )
+
             .bind(id)
             .bind(username.clone())
             .bind(email)
             .bind(argon2_hash)
-            .bind(&now) // Bind RFC3339 string references
+            .bind(&now) 
             .bind(&now)
             .execute(&pool)
             .await?;

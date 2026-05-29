@@ -14,6 +14,8 @@ pub struct User {
     pub updated_at: String,
 }
 
+// /forgepress-core/src/database/users.rs
+
 pub async fn create_user(
     pool: &AnyPool,
     username: &str,
@@ -26,7 +28,7 @@ pub async fn create_user(
 
     sqlx::query(
         "INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at) \
-         VALUES ($1, $2, $3, $4, $5, $6, $7)"
+         VALUES (CAST($1 AS uuid), $2, $3, $4, $5, CAST($6 AS timestamptz), CAST($7 AS timestamptz))"
     )
     .bind(&id)
     .bind(username)
@@ -44,24 +46,30 @@ pub async fn create_user(
         email: email.to_string(),
         password_hash: password_hash.to_string(),
         role: role.to_string(),
-        // Fixed: Cloned standard RFC3339 string before second use
         created_at: now.clone(),
         updated_at: now,
     })
 }
-
 pub async fn get_user_by_id(pool: &AnyPool, id: &str) -> Result<Option<User>, AppError> {
-    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
-        .bind(id)
-        .fetch_optional(pool)
-        .await?;
+    let user = sqlx::query_as::<_, User>(
+        "SELECT CAST(id AS VARCHAR) AS id, username, email, password_hash, role, \
+         CAST(created_at AS VARCHAR) AS created_at, CAST(updated_at AS VARCHAR) AS updated_at \
+         FROM users WHERE id = CAST($1 AS uuid)"
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
     Ok(user)
 }
 
 pub async fn get_user_by_username(pool: &AnyPool, username: &str) -> Result<Option<User>, AppError> {
-    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = $1")
-        .bind(username)
-        .fetch_optional(pool)
-        .await?;
+    let user = sqlx::query_as::<_, User>(
+        "SELECT CAST(id AS VARCHAR) AS id, username, email, password_hash, role, \
+         CAST(created_at AS VARCHAR) AS created_at, CAST(updated_at AS VARCHAR) AS updated_at \
+         FROM users WHERE username = $1"
+    )
+    .bind(username)
+    .fetch_optional(pool)
+    .await?;
     Ok(user)
 }

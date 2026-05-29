@@ -4,7 +4,7 @@ touch content/forgepress.db
 echo "=========================================================="
 echo "            Starting ForgePress Dev Environment           "
 echo "=========================================================="
-
+### refesh cargo run --package forgepress-cli -- create-admin --username admin --email admin@admin.com --password password
 # 1. Ensure the environment configuration file exists
 if [ ! -f .env ]; then
     echo "No .env file detected. Copying .env.example to .env..."
