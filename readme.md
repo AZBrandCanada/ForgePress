@@ -1,3 +1,4 @@
+# This is in Development, Early Alpha Stage.
 # ForgePress: Architecture, Design, and Implementation Specification
 
 ForgePress is a modular content management system (CMS) written in Rust. It decouples content storage and administration from content delivery, bringing systems-level performance, memory safety, and sandboxed extensibility to web publishing.
