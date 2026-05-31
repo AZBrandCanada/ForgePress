@@ -1,4 +1,3 @@
-// /forgepress-core/src/routing/public/renderer.rs
 use std::future::Future;
 use std::pin::Pin;
 use minijinja::context;
@@ -10,6 +9,7 @@ use crate::database::pages::Page;
 use crate::domain::page::Block;
 use crate::error::AppError;
 
+/// Compiles page blocks recursively. (Untouched)
 pub fn compile_blocks<'a>(
     state: &'a AppState,
     blocks: &'a [Block],
@@ -59,6 +59,60 @@ pub fn compile_blocks<'a>(
     })
 }
 
+/// Post-processing helper that optimizes, minifies, and packages the rendered page.
+fn optimize_and_minify_html(raw_html: &str) -> String {
+    // 1. Universal Image loading optimization:
+    // Automatically inject native lazy loading and asynchronous image decoding.
+    let optimized_html = raw_html
+        .replace("<img ", "<img loading=\"lazy\" decoding=\"async\" ");
+
+    // 2. Minifier: Collapse layout whitespace into a single-line flow, 
+    // while ensuring structural comments remain on their own lines.
+    let mut minified = String::new();
+    let mut in_preserved_block = false;
+
+    for line in optimized_html.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        // Prevent squishing of preformatted code or text blocks where whitespace matters
+        if trimmed.contains("<pre") || trimmed.contains("<code") || trimmed.contains("<script") {
+            in_preserved_block = true;
+        }
+        if trimmed.contains("</pre>") || trimmed.contains("</code>") || trimmed.contains("</script>") {
+            in_preserved_block = false;
+        }
+
+        if in_preserved_block {
+            minified.push_str(line);
+            minified.push('\n');
+        } else if trimmed.starts_with("<!--") && trimmed.ends_with("-->") {
+            // Isolate structural template comments on their own line
+            if !minified.is_empty() && !minified.ends_with('\n') {
+                if minified.ends_with(' ') {
+                    minified.pop(); // Cleanly remove the trailing space from the previous element
+                }
+                minified.push('\n');
+            }
+            minified.push_str(trimmed);
+            minified.push('\n');
+        } else {
+            // Collapse standard tags and elements into a spaced layout flow
+            minified.push_str(trimmed);
+            minified.push(' ');
+        }
+    }
+
+    // 3. Inject only your clean production header signature
+    let header_signature = format!(
+        "<!--\n  ⚡ Rendered by ForgePress Engine\n  ⚡ Native Asset Optimization & Minification Applied\n-->\n"
+    );
+
+    format!("{}{}", header_signature, minified.trim())
+}
+/// Renders the page using templates and returns the optimized, production-ready HTML markup.
 pub async fn render_page(state: &AppState, page: &Page) -> Result<String, AppError> {
     debug!("Starting page rendering pipeline for page: '{}'", page.title);
 
@@ -80,10 +134,12 @@ pub async fn render_page(state: &AppState, page: &Page) -> Result<String, AppErr
         slug => page.slug,
         meta => meta_value,
         body => body_content,
-        // Fixed: Read the non-nullable string directly. If empty, falls back to empty default string.
         published_at => if page.published_at.is_empty() { "".to_string() } else { page.published_at.clone() }
     })
     .map_err(|e| AppError::Template(e))?;
 
-    Ok(full_html)
+    // Optimize the HTML before returning it (compacting layout, lazy-loading media, adding meta header)
+    let optimized_output = optimize_and_minify_html(&full_html);
+
+    Ok(optimized_output)
 }
